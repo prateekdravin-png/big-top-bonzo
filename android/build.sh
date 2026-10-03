@@ -21,12 +21,13 @@ echo "platform:    $PLATFORM (targetSdk $TARGET_SDK)"
 
 rm -rf "$OUT"; mkdir -p "$OUT/assets" "$OUT/gen" "$OUT/obj" "$OUT/dex"
 
-# 1. Game assets: the same index.html, with the pixel font bundled instead of loaded from Google Fonts
-cp "$HERE/fonts/PressStart2P-Regular.ttf" "$OUT/assets/"
+# 1. Game assets: the same index.html, with the Fredoka font bundled instead of loaded from Google Fonts
+cp "$HERE"/fonts/Fredoka-*.ttf "$OUT/assets/"
 node -e '
   const fs = require("fs");
   let h = fs.readFileSync(process.argv[1], "utf8");
-  const local = "<style>@font-face{font-family:\"Press Start 2P\";src:url(PressStart2P-Regular.ttf) format(\"truetype\");font-display:block}" +
+  const face = (file, w) => "@font-face{font-family:\"Fredoka\";font-weight:" + w + ";src:url(" + file + ") format(\"truetype\");font-display:block}";
+  const local = "<style>" + face("Fredoka-Medium.ttf", 500) + face("Fredoka-SemiBold.ttf", 600) + face("Fredoka-Bold.ttf", 700) +
                 "#fsBtn{display:none!important}</style>";
   const before = h.length;
   h = h.replace(/<link href="https:\/\/fonts\.googleapis\.com[^>]*>/, local)
