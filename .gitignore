@@ -6,3 +6,6 @@ android/build/
 dist/
 android/*.jks
 android/keystore.properties
+
+# leaderboard deploy bundle
+leaderboard/function.zip*

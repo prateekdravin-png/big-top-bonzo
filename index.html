@@ -29,14 +29,15 @@
     border:1px solid var(--edge);background:var(--glass);color:var(--ink);font:inherit;padding:0;
     -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
   .ctl svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-  #dpad{left:calc(16px + env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));width:172px;height:80px;border-radius:40px}
+  #dpad{left:calc(14px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));width:156px;height:70px;border-radius:35px;opacity:.75;transition:opacity .15s}
+  #dpad:has(.on){opacity:1}
   #dpad span{flex:1;height:100%;display:flex;align-items:center;justify-content:center;border-radius:40px;transition:background .08s}
   #dpad span.on{background:var(--glass-on)}
   #dpad svg{width:30px;height:30px;fill:currentColor;stroke:none}
-  #jump{right:calc(16px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));width:100px;height:100px;border-radius:50%;
+  #jump{right:calc(14px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));width:88px;height:88px;border-radius:50%;opacity:.8;
     border:none;background:radial-gradient(circle at 35% 30%,#ff8aa0,var(--red) 45%,var(--red-dk));font-size:17px;font-weight:700;letter-spacing:.06em;
     box-shadow:0 8px 22px rgba(200,23,74,.45),inset 0 -4px 0 rgba(0,0,0,.18);transition:transform .06s}
-  #jump.on{transform:scale(.93);filter:brightness(1.12)}
+  #jump.on{transform:scale(.93);filter:brightness(1.12);opacity:1}
   .small{top:calc(10px + env(safe-area-inset-top));width:44px;height:44px;border-radius:14px}
   #pauseBtn{right:calc(12px + env(safe-area-inset-right))}
   #soundBtn{right:calc(64px + env(safe-area-inset-right))}
@@ -44,7 +45,7 @@
   #soundBtn .slash{display:none}
   #soundBtn.off .slash{display:inline}
   #soundBtn.off{color:var(--muted)}
-  body.portrait .small{top:auto;bottom:calc(132px + env(safe-area-inset-bottom))}
+  body.portrait .small{top:auto;bottom:calc(118px + env(safe-area-inset-bottom))}
   #stages{position:fixed;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:none;flex-wrap:wrap;gap:8px;
     justify-content:center;padding:0 16px}
   #stages button{font:inherit;font-size:14px;font-weight:600;color:var(--ink);background:var(--glass);border:1px solid var(--edge);border-radius:999px;
@@ -54,10 +55,76 @@
   #stages .hint{width:100%;text-align:center;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   body.touch.st-title #stages{display:flex}
   body.st-title #dpad,body.st-title #jump,body.st-title #pauseBtn{display:none}
+  /* leaderboard */
+  #boardBtn{position:fixed;left:calc(12px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));display:none;align-items:center;gap:8px;
+    height:44px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--glass);color:var(--ink);font:inherit;font-size:15px;font-weight:600;
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer}
+  #boardBtn svg{width:20px;height:20px;fill:var(--gold)}
+  body.st-title #boardBtn{display:flex}
+  body.board-open #boardBtn{display:none}
+  #board{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+    padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:rgba(8,3,22,.62);
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);touch-action:auto;-webkit-user-select:text;user-select:text}
+  #board[hidden]{display:none}
+  .panel{width:min(440px,100%);max-height:100%;overflow:auto;box-sizing:border-box;padding:20px 20px 16px;border-radius:22px;
+    background:linear-gradient(180deg,#36196f,#190b3c);border:1px solid rgba(255,200,74,.42);box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .panel h2{margin:0;font-size:26px;font-weight:700;text-align:center;color:var(--gold);text-wrap:balance}
+  .panel .sub{margin:2px 0 14px;text-align:center;font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  #submitForm{display:grid;gap:8px;margin:0 0 14px;padding:14px;border-radius:16px;background:rgba(255,255,255,.07)}
+  #submitForm[hidden]{display:none}
+  .final{margin:0;text-align:center;font-size:15px;color:var(--muted)}
+  .final strong{display:block;font-size:30px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  #submitForm label{font-size:13px;font-weight:600;color:var(--muted)}
+  .row2{display:flex;gap:8px}
+  #nameInput{flex:1;min-width:0;height:46px;box-sizing:border-box;padding:0 14px;border-radius:12px;border:1px solid var(--edge);background:rgba(8,3,22,.55);
+    color:var(--ink);font:inherit;font-size:18px;font-weight:600}
+  #nameInput:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .panel button{font:inherit;font-weight:600;font-size:16px;height:46px;padding:0 18px;border-radius:12px;border:1px solid var(--edge);
+    background:var(--glass);color:var(--ink);cursor:pointer}
+  .panel button.primary{border:none;background:linear-gradient(180deg,#ff7a95,#e0204f);box-shadow:0 6px 16px rgba(200,23,74,.35)}
+  .panel button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .panel button:disabled{opacity:.6}
+  .msg{margin:0;min-height:1.2em;font-size:14px;text-align:center;color:var(--muted)}
+  .msg.err{color:#ff9ab0}
+  .msg.good{color:var(--gold);font-weight:600}
+  #boardList{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+  #boardList li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06)}
+  #boardList .rk{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:rgba(255,255,255,.12)}
+  #boardList li:nth-child(1) .rk{background:#ffc84a;color:#3a1d00}
+  #boardList li:nth-child(2) .rk{background:#d9dcf2;color:#24204a}
+  #boardList li:nth-child(3) .rk{background:#e8915a;color:#3a1400}
+  #boardList .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:600}
+  #boardList .nm small{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+  #boardList .pts{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+  #boardList li.me{background:rgba(255,200,74,.18);outline:1px solid rgba(255,200,74,.6)}
+  .actions{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  .actions button{flex:1}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<button id="boardBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/></svg>Leaderboard</button>
+<div id="board" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="boardTitle">
+    <h2 id="boardTitle">Leaderboard</h2>
+    <p class="sub">World top 10</p>
+    <form id="submitForm" hidden>
+      <p class="final">Your score<strong id="finalScore">0</strong></p>
+      <label for="nameInput">Your name on the board</label>
+      <div class="row2">
+        <input id="nameInput" maxlength="12" autocomplete="nickname" enterkeyhint="done" spellcheck="false" placeholder="Bonzo fan">
+        <button type="submit" class="primary" id="saveBtn">Save score</button>
+      </div>
+      <p id="formMsg" class="msg" role="status"></p>
+    </form>
+    <ol id="boardList"></ol>
+    <p id="boardMsg" class="msg" role="status"></p>
+    <div class="actions">
+      <button type="button" id="boardClose">Close</button>
+      <button type="button" id="boardPlay" class="primary">Play</button>
+    </div>
+  </div>
+</div>
 <div id="pad">
   <div id="dpad" class="ctl" aria-label="Move left or right">
     <span data-d="l"><svg viewBox="0 0 24 24"><path d="M15 5 7 12l8 7z"/></svg></span>
@@ -79,7 +146,7 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
-const APP_VERSION = '2.1'; // shown on the title screen; bump with VERSION in sw.js
+const APP_VERSION = '2.2'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
 let W = 384; // visible world width; follows the screen's shape (256 to 528)
 const FONT = '"Fredoka", "Baloo 2", "Nunito", system-ui, sans-serif';
@@ -117,6 +184,7 @@ addEventListener('load', resize);
 const keys = {}; let pressed = {};
 const touch = { left: false, right: false, jump: false, jumpP: false };
 addEventListener('keydown', e => {
+  if (BOARD.isOpen) { if (e.code === 'Escape') BOARD.close(); return; } // typing a name, not playing
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
   if (!keys[e.code]) pressed[e.code] = true;
   keys[e.code] = true; AU.unlock();
@@ -163,7 +231,86 @@ document.querySelectorAll('#stages button').forEach(b => b.addEventListener('cli
   e.stopPropagation(); AU.unlock(); const s = +b.dataset.s;
   if (state === 'title') newGame(s === 7 ? 3 : s, s === 7);
 }));
-['contextmenu', 'gesturestart', 'dblclick'].forEach(t => addEventListener(t, e => e.preventDefault()));
+['contextmenu', 'gesturestart', 'dblclick'].forEach(t => addEventListener(t, e => { if (!BOARD.isOpen) e.preventDefault(); }));
+
+// ---------------------------------------------------------------- online leaderboard
+const LEADERBOARD_URL = 'https://br-raspy-surf-b3g6ixt6-scores.compute.c-4.ap-southeast-1.aws.neon.tech/scores';
+const BOARD = {
+  isOpen: false, shown: false, mine: null,
+  async api(method, body) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 9000);
+    try {
+      const res = await fetch(LEADERBOARD_URL + (method === 'GET' ? '?limit=10' : ''), {
+        method, signal: ctl.signal, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'The leaderboard is unavailable right now.');
+      return data;
+    } catch (e) {
+      throw new Error(e.name === 'AbortError' || e instanceof TypeError ? "Couldn't reach the leaderboard. Check your internet connection and try again." : e.message);
+    } finally { clearTimeout(timer); }
+  },
+  open(mode) {
+    this.isOpen = true; document.body.classList.add('board-open'); $('board').hidden = false;
+    for (const k in keys) keys[k] = false; touch.left = touch.right = touch.jump = false;
+    const submit = mode === 'submit';
+    $('submitForm').hidden = !submit;
+    $('boardPlay').textContent = state === 'gameover' ? 'Play again' : 'Play';
+    $('formMsg').textContent = ''; $('formMsg').className = 'msg'; $('saveBtn').disabled = false;
+    if (submit) {
+      this.mine = null;
+      $('finalScore').textContent = fmt(score);
+      let saved = ''; try { saved = localStorage.getItem('bigtopbonzo_name') || ''; } catch (e) {}
+      $('nameInput').value = saved;
+      if (!TOUCH) setTimeout(() => $('nameInput').focus(), 60); // on phones, wait for a tap so the keyboard doesn't cover the board
+    }
+    this.load();
+  },
+  close() {
+    this.isOpen = false; document.body.classList.remove('board-open'); $('board').hidden = true;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (state === 'gameover') setState('title');
+  },
+  async load() {
+    $('boardMsg').className = 'msg'; $('boardMsg').textContent = 'Loading scores…';
+    try { this.render((await this.api('GET')).top); $('boardMsg').textContent = ''; }
+    catch (e) { $('boardList').replaceChildren(); $('boardMsg').className = 'msg err'; $('boardMsg').textContent = e.message; }
+  },
+  render(top) {
+    const list = $('boardList'); list.replaceChildren();
+    if (!top.length) { $('boardMsg').textContent = 'No scores yet. Finish a game to be the first on the board.'; return; }
+    top.forEach((r, i) => {
+      const li = document.createElement('li'); if (r.id === this.mine) li.className = 'me';
+      const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i + 1;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.name;
+      const st = document.createElement('small'); st.textContent = 'Reached stage ' + r.stage; nm.append(st);
+      const pts = document.createElement('span'); pts.className = 'pts'; pts.textContent = fmt(r.score);
+      li.append(rk, nm, pts); list.append(li);
+    });
+  },
+  async submit(e) {
+    e.preventDefault();
+    const name = $('nameInput').value.trim();
+    if (!name) { $('formMsg').className = 'msg err'; $('formMsg').textContent = 'Enter a name first.'; $('nameInput').focus(); return; }
+    $('saveBtn').disabled = true; $('formMsg').className = 'msg'; $('formMsg').textContent = 'Saving…';
+    try {
+      const res = await this.api('POST', { name, score, stage: stageNum });
+      try { localStorage.setItem('bigtopbonzo_name', name); } catch (err) {}
+      this.mine = res.id; this.render(res.top); $('boardMsg').textContent = '';
+      $('submitForm').hidden = true;
+      $('boardMsg').className = 'msg good';
+      $('boardMsg').textContent = res.rank <= 10 ? `You're number ${res.rank} in the world!`
+        : `Saved. You're number ${res.rank}; the top 10 starts at ${fmt(res.top[res.top.length - 1].score)}.`;
+    } catch (err) {
+      $('saveBtn').disabled = false; $('formMsg').className = 'msg err'; $('formMsg').textContent = err.message;
+    }
+  }
+};
+$('boardBtn').addEventListener('click', () => { AU.unlock(); BOARD.open('view'); });
+$('boardClose').addEventListener('click', () => BOARD.close());
+$('boardPlay').addEventListener('click', () => { BOARD.close(); newGame(1); });
+$('submitForm').addEventListener('submit', e => BOARD.submit(e));
+$('board').addEventListener('pointerdown', e => { if (e.target === $('board')) BOARD.close(); });
 // auto-pause when the app goes to the background
 document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') { setState('pause'); MUS.stop(); } });
 const L = () => keys.ArrowLeft || keys.KeyA || touch.left;
@@ -642,7 +789,9 @@ function addScore(n, x, y) {
   if (score >= nextLife) { lives++; nextLife += 30000; SFX.oneup(); floats.push({ x: P.x, y: P.y - 40, s: '+1 life', t: 0 }); }
 }
 function safe(x) { if (x - CP >= 10 * MPX) CP = x; }
-function camFor(x) { return clamp(x - W * 0.34, 0, Math.max(0, Lpx - W * 0.62)); }
+// Bonzo sits about a third of the way in, even at the start of a stage, so the
+// on-screen arrows in the bottom-left corner never cover him
+function camFor(x) { const lo = (LV ? LV.start : 0) - W * 0.34; return clamp(x - W * 0.34, lo, Math.max(lo, Lpx - W * 0.62)); }
 
 function newGame(st, pool) {
   score = 0; lives = 3; nextLife = 20000; stageNum = st; forcePool = !!pool; SFX.start(); startStage();
@@ -683,7 +832,7 @@ function runnerPlayer(dt, spd, back) {
   } else p.vy += GRAV * dt;
   p.x += p.vx * dt; p.y += p.vy * dt;
   if (p.y >= GROUND && p.vy >= 0) { if (!p.g) { SFX.land(); FX.dust(p.x, GROUND); } p.y = GROUND; p.vy = 0; p.g = true; }
-  p.x = Math.max(p.x, camX + 14);
+  p.x = Math.max(p.x, camX + 14, LV.start - 20); // no wandering off behind the start line
   if (p.g && p.vx) p.anim += dt * Math.abs(p.vx) / 10;
   if (p.g) safe(p.x);
 }
@@ -773,7 +922,7 @@ const WIRE_LV = {
     else p.vy += GRAV * dt;
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.y >= ROPE) { p.y = ROPE; p.vy = 0; p.g = true; }
-    p.x = Math.max(p.x, camX + 10);
+    p.x = Math.max(p.x, camX + 10, 8); // the wire starts at the left tower
     if (p.g && p.vx) p.anim += dt * Math.abs(p.vx) / 8;
     if (p.g) safe(p.x);
     const pb = [p.x - 4, p.y - 15, p.x + 4, p.y - 1];
@@ -969,7 +1118,8 @@ const BALL_LV = {
       if (!o.act && o.x - camX < W + 34) o.act = true;
       if (o === p.ball) {
         o.vx = toward(o.vx, R() ? 65 : L() ? -38 : 0, 150 * dt);
-        if (o.x < camX + 12 && o.vx < 0) { o.vx = 0; o.x = camX + 12; }
+        const minX = Math.max(camX + 12, LV.start - 20);
+        if (o.x < minX && o.vx < 0) { o.vx = 0; o.x = minX; }
       } else if (o === p.last) o.vx = toward(o.vx, 0, 120 * dt); // abandoned ball rolls to a stop
       if (o.act) { o.x += o.vx * dt; o.rot += o.vx * dt / 8; }
     }
@@ -1170,6 +1320,8 @@ function update(dt) {
   if (pressed.KeyM) { AU.on = !AU.on; $('soundBtn').classList.toggle('off', !AU.on); if (!AU.on) MUS.stop(); else if (state === 'play') MUS.start(); }
   switch (state) {
     case 'title': {
+      if (BOARD.isOpen) break;
+      if (pressed.KeyL) { BOARD.open('view'); break; }
       for (let i = 1; i <= 7; i++) if (pressed['Digit' + i] || pressed['Numpad' + i]) { newGame(i === 7 ? 3 : i, i === 7); return; }
       if (pressed.Enter || pressed.Space || touch.jumpP) newGame(1);
       break;
@@ -1192,7 +1344,7 @@ function update(dt) {
       P.dvy += GRAV * dt; P.dy += P.dvy * dt;
       if (stateT > 2.2) {
         lives--;
-        if (lives <= 0) { saveHi(); setState('gameover'); }
+        if (lives <= 0) { saveHi(); BOARD.shown = false; setState('gameover'); }
         else { spawnAt(CP); setState('intro'); }
       }
       break;
@@ -1208,6 +1360,8 @@ function update(dt) {
       if (tallyDone > 0 && stateT > tallyDone + 1.5) { saveHi(); stageNum++; forcePool = false; startStage(); }
       break;
     case 'gameover':
+      if (!BOARD.shown && stateT > 1.2) { BOARD.shown = true; if (score > 0) { BOARD.open('submit'); break; } }
+      if (BOARD.isOpen) break;
       if (stateT > 4 || (stateT > 1 && (pressed.Enter || pressed.Space || touch.jumpP))) setState('title');
       break;
   }
@@ -1288,7 +1442,7 @@ function drawTitle() {
   text(TOUCH ? 'Tap to play' : 'Press Enter', 0, 0.5, { size: 9, w: 700, align: 'center', color: '#fff8ee' });
   ctx.restore();
   text('BEST  ' + fmt(hi), W / 2, 122, { size: 6, w: 600, align: 'center', color: '#ffe08a', ls: 1 });
-  if (!TOUCH) text('1–6 pick a stage  ·  7 piranha pool  ·  arrows + space to play', W / 2, 133, { size: 5.2, w: 500, align: 'center', color: '#c9bfe8' });
+  if (!TOUCH) text('1–6 pick a stage  ·  7 piranha pool  ·  L leaderboard  ·  arrows + space to play', W / 2, 133, { size: 5.2, w: 500, align: 'center', color: '#c9bfe8' });
   // the troupe takes a bow
   const bx = W * 0.2, lx = W * 0.8;
   ctx.save(); ctx.translate(bx, GROUND); ctx.scale(1.35, 1.35);
