@@ -1,2 +1,8 @@
 # reference screenshots of the original game (not ours to publish)
 Screenshot*.png
+
+# Android build output and the private signing key
+android/build/
+dist/
+android/*.jks
+android/keystore.properties

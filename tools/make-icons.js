@@ -35,8 +35,9 @@ function png(size, px) {
   for (let y = 0; y < size; y++) {
     raw[y * (size * 4 + 1)] = 0;
     for (let x = 0; x < size; x++) {
-      const [r, g, b] = px(x, y), o = y * (size * 4 + 1) + 1 + x * 4;
-      raw[o] = r; raw[o + 1] = g; raw[o + 2] = b; raw[o + 3] = 255;
+      const c = px(x, y), o = y * (size * 4 + 1) + 1 + x * 4;
+      if (!c) continue; // transparent
+      raw[o] = c[0]; raw[o + 1] = c[1]; raw[o + 2] = c[2]; raw[o + 3] = 255;
     }
   }
   const ihdr = Buffer.alloc(13);
@@ -46,20 +47,21 @@ function png(size, px) {
     chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 // size: output px; art: fraction of the icon the clown's width fills (smaller for maskable)
-function icon(size, art) {
+function icon(size, art, layer = 'full') {
   const cell = Math.max(1, Math.floor(size * art / 12));
   const aw = cell * 12, ah = cell * ART.length;
   const ox = Math.floor((size - aw) / 2), oy = Math.floor((size - ah) / 2) + Math.floor(cell * 0.6);
   const stripe = size / 8, rad = size * (art * 0.62 + 0.06);
   return png(size, (x, y) => {
     const ax = Math.floor((x - ox) / cell), ay = Math.floor((y - oy) / cell);
-    if (ax >= 0 && ax < 12 && ay >= 0 && ay < ART.length) {
+    if (layer !== 'bg' && ax >= 0 && ax < 12 && ay >= 0 && ay < ART.length) {
       const ch = ART[ay][ax];
       if (ch && ch !== '.') return PAL[ch];
     }
     const dx = x - size / 2, dy = y - size / 2, d = Math.hypot(dx, dy);
-    if (d < rad) return [0, 0, 0];
-    if (d < rad + size * 0.02) return PAL.Y;
+    if (layer !== 'bg' && d < rad) return [0, 0, 0];
+    if (layer !== 'bg' && d < rad + size * 0.02) return PAL.Y;
+    if (layer === 'fg') return null;
     return Math.floor(x / stripe) % 2 ? PAL.W : PAL.R; // big-top tent stripes
   });
 }
@@ -70,3 +72,14 @@ fs.writeFileSync(path.join(out, 'icon-512.png'), icon(512, 0.6));
 fs.writeFileSync(path.join(out, 'icon-maskable-512.png'), icon(512, 0.45));
 fs.writeFileSync(path.join(out, 'apple-touch-icon.png'), icon(180, 0.55));
 console.log('icons written to', out);
+
+// Android launcher icons: legacy squares per density + adaptive layers (108dp canvas, art in the 66dp safe zone)
+const res = path.join(__dirname, '..', 'android', 'res');
+for (const [dir, px] of [['mdpi', 48], ['hdpi', 72], ['xhdpi', 96], ['xxhdpi', 144], ['xxxhdpi', 192]]) {
+  fs.mkdirSync(path.join(res, 'mipmap-' + dir), { recursive: true });
+  fs.writeFileSync(path.join(res, 'mipmap-' + dir, 'ic_launcher.png'), icon(px, 0.6));
+}
+fs.mkdirSync(path.join(res, 'drawable-xxxhdpi'), { recursive: true });
+fs.writeFileSync(path.join(res, 'drawable-xxxhdpi', 'ic_launcher_fg.png'), icon(432, 0.4, 'fg'));
+fs.writeFileSync(path.join(res, 'drawable-xxxhdpi', 'ic_launcher_bg.png'), icon(432, 0.4, 'bg'));
+console.log('android icons written to', res);
