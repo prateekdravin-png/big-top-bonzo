@@ -79,6 +79,7 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
+const APP_VERSION = '2.1'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
 let W = 384; // visible world width; follows the screen's shape (256 to 528)
 const FONT = '"Fredoka", "Baloo 2", "Nunito", system-ui, sans-serif';
@@ -1296,6 +1297,7 @@ function drawTitle() {
   shadowAt(0, 0, 14); drawLion(0, 0, gt * 6, true, false); drawBonzo(-4, -7.2, 'cheer'); ctx.restore();
   ctx.save(); ctx.translate(W * 0.36, GROUND); drawMonkey(0, 0, gt * 8, false); ctx.restore();
   ctx.save(); ctx.translate(W * 0.64, GROUND); drawBrazier(0, 0); ctx.restore();
+  text('v' + APP_VERSION, 6, H - 6, { size: 5, w: 500, color: 'rgba(201,191,232,.6)' });
 }
 function drawIntro() {
   drawScene(); drawHUD(); dim(0.45); vignette(0.5);
@@ -1358,7 +1360,15 @@ requestAnimationFrame(frame);
 
 // installable app: offline cache (needs https or localhost; skipped when opened as a plain file)
 if ('serviceWorker' in navigator && /^(https:|http:\/\/(localhost|127\.0\.0\.1))/.test(location.href)) {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  const hadController = !!navigator.serviceWorker.controller;
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+    // installed apps often resume instead of restarting, so also look for updates when brought back
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => {}));
+  // a new version took over: reload into it (on the title screen, so a run in progress isn't interrupted)
+  let pendingReload = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) pendingReload = true; });
+  setInterval(() => { if (pendingReload && state === 'title') location.reload(); }, 500);
 }
 // already running as an installed app: it opens full screen, so the button isn't needed
 if (matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone) $('fsBtn').style.display = 'none';
