@@ -146,7 +146,7 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
-const APP_VERSION = '2.2'; // shown on the title screen; bump with VERSION in sw.js
+const APP_VERSION = '2.3'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
 let W = 384; // visible world width; follows the screen's shape (256 to 528)
 const FONT = '"Fredoka", "Baloo 2", "Nunito", system-ui, sans-serif';
@@ -1524,8 +1524,8 @@ if ('serviceWorker' in navigator && /^(https:|http:\/\/(localhost|127\.0\.0\.1))
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) pendingReload = true; });
   setInterval(() => { if (pendingReload && state === 'title') location.reload(); }, 500);
 }
-// already running as an installed app: it opens full screen, so the button isn't needed
-if (matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone) $('fsBtn').style.display = 'none';
+// already running as an installed app (home-screen app or the Android app): it opens full screen, so the button isn't needed
+if (matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone || /BigTopBonzoApp/.test(navigator.userAgent)) $('fsBtn').style.display = 'none';
 </script>
 </body>
 </html>

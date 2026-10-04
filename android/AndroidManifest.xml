@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.prateekdravin.bigtopbonzo">
 
-    <!-- The game and its font are bundled and run offline; internet is only used for the online leaderboard. -->
+    <!-- Loads the game from the website so updates arrive automatically; a bundled copy is the offline fallback. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Big Top Bonzo"

@@ -6,13 +6,32 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.net.Uri;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-/** Full-screen WebView that runs the bundled game from the APK's assets. */
+/**
+ * Full-screen WebView that plays the game from the website, so every update published
+ * there reaches this app automatically (the site's service worker keeps an offline copy).
+ * If the site can't be reached and nothing is cached yet, it falls back to the copy bundled
+ * in the APK.
+ */
 public class MainActivity extends Activity {
+    private static final String GAME_URL = "https://prateekdravin-png.github.io/big-top-bonzo/";
+    private static final String GAME_HOST = "prateekdravin-png.github.io";
+    private static final String BUNDLED_URL = "file:///android_asset/index.html";
     private WebView web;
+    private boolean usingBundled = false;
+
+    private void useBundledCopy() {
+        if (usingBundled) return;
+        usingBundled = true;
+        web.loadUrl(BUNDLED_URL);
+    }
 
     @Override
     protected void onCreate(Bundle saved) {
@@ -29,13 +48,30 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);                 // keeps the high score
         s.setMediaPlaybackRequiresUserGesture(false); // music and sound effects
-        s.setAllowFileAccess(true);
-        web.setWebViewClient(new WebViewClient());    // never hand off to an external browser
+        s.setAllowFileAccess(true);                   // for the bundled fallback copy
+        s.setUserAgentString(s.getUserAgentString() + " BigTopBonzoApp"); // lets the page know it's inside the app
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                Uri u = req.getUrl();
+                return !(GAME_HOST.equals(u.getHost()) || "file".equals(u.getScheme())); // stay on the game only
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
+                if (req.isForMainFrame()) useBundledCopy(); // offline with nothing cached yet
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest req, WebResourceResponse res) {
+                if (req.isForMainFrame() && res.getStatusCode() >= 400) useBundledCopy();
+            }
+        });
         setContentView(web);
         hideSystemBars();
 
         if (saved != null) web.restoreState(saved);
-        else web.loadUrl("file:///android_asset/index.html");
+        else web.loadUrl(GAME_URL);
     }
 
     @SuppressWarnings("deprecation")
