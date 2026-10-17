@@ -171,9 +171,15 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
-const APP_VERSION = '3.0'; // shown on the title screen; bump with VERSION in sw.js
+const APP_VERSION = '3.1'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
-let W = 384; // visible world width; follows the screen's shape (256 to 528)
+let W = 384; // screen width in HUD units (the screen is always 240 HUD units tall); follows the screen's shape (256 to 528)
+// The playfield is drawn zoomed in so everything looks bigger: 1.5x on wide screens, 1.3x on narrow ones,
+// where a stronger zoom would leave too little warning of what's ahead.
+let ZOOM = 1.5, VH = H / ZOOM, VW = W / ZOOM; // zoom, and the visible world height and width
+// world y at the bottom of the view: just below the ground, or higher on the trapeze where the action is up in the air
+const camTop = () => ((LV && LV.viewBottom) || 220) - VH;
+let camY = 60, camYT = 60;                     // world y at the top of the view, and where it is heading
 const FONT = '"Fredoka", "Baloo 2", "Nunito", system-ui, sans-serif';
 const cv = document.getElementById('c');
 let ctx = cv.getContext('2d'); // swapped briefly to paint wardrobe previews
@@ -190,6 +196,7 @@ function resize() {
   if (!(vw > 0 && availH > 0)) return; // the window can briefly report 0x0 while the page loads
   W = Math.round(clamp(H * vw / availH, 256, 528)); // up to ~20:9 so tall phones fill the screen
   S = Math.min(vw / W, availH / H);
+  ZOOM = W >= 400 ? 1.5 : 1.3; VH = H / ZOOM; VW = W / ZOOM;
   cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px';
   cv.style.marginTop = TOUCH && PORTRAIT ? Math.max(0, (vh - 240 - H * S) / 2) + 'px' : '0';
   cv.width = Math.round(W * S * DPR); cv.height = Math.round(H * S * DPR);
@@ -754,7 +761,7 @@ function drawBrazier(sx, gy) {
 
 function drawPodium(wx, top = GROUND) {
   const sx = wx - camX;
-  if (sx < -40 || sx > W + 40) return;
+  if (sx < -40 || sx > VW + 40) return;
   glow(sx, top - 12, 30, GOLD, 0.35 + 0.1 * Math.sin(gt * 3));
   rr(sx - 15, top - 12, 30, 12, 2.5, lin(0, top - 12, 0, top, ['#ffdb72', '#e8891c']));
   rr(sx - 15, top - 12, 30, 2.8, 1.4, '#fff3c4');
@@ -784,9 +791,9 @@ function drawArch(sx) {
   for (let i = 0; i < 9; i++) circle(sx - 16 + i * 4, 63.2, 1.1, '#ffc84a');
 }
 function drawBackdrop(cx) {
-  ctx.fillStyle = lin(0, 0, 0, 118, ['#0b0620', '#1c0f48', '#2f1866']); ctx.fillRect(0, 0, W, 119);
+  ctx.fillStyle = lin(0, 0, 0, 118, ['#0b0620', '#1c0f48', '#2f1866']); ctx.fillRect(0, 0, VW, 119);
   // tent canvas panels radiating from the peak
-  const apx = W * 0.5 - cx * 0.06, apy = -80;
+  const apx = VW * 0.5 - cx * 0.06, apy = -80;
   for (let i = -16; i < 16; i += 2) {
     const a0 = i * 0.1, a1 = (i + 1) * 0.1;
     poly([apx, apy, apx + Math.sin(a0) * 420, apy + Math.cos(a0) * 420, apx + Math.sin(a1) * 420, apy + Math.cos(a1) * 420], 'rgba(255,255,255,0.04)');
@@ -794,14 +801,14 @@ function drawBackdrop(cx) {
   // sweeping spotlights
   ctx.globalCompositeOperation = 'lighter';
   for (let k = 0; k < 3; k++) {
-    const bx = W * (0.18 + 0.32 * k) + Math.sin(gt * 0.45 + k * 2.1) * W * 0.07, tx = bx + Math.sin(gt * 0.35 + k * 1.3) * 70;
+    const bx = VW * (0.18 + 0.32 * k) + Math.sin(gt * 0.45 + k * 2.1) * VW * 0.07, tx = bx + Math.sin(gt * 0.35 + k * 1.3) * 70;
     ctx.beginPath(); ctx.moveTo(bx - 2, -4); ctx.lineTo(bx + 2, -4); ctx.lineTo(tx + 30, 150); ctx.lineTo(tx - 30, 150); ctx.closePath();
     ctx.fillStyle = lin(0, 0, 0, 150, ['rgba(255,236,190,0.14)', 'rgba(255,236,190,0.05)', 'rgba(255,236,190,0)']); ctx.fill();
   }
   ctx.globalCompositeOperation = 'source-over';
   // string lights
   const lp = cx * 0.35, span = 110;
-  for (let s = Math.floor(lp / span) - 1; s * span - lp < W + span; s++) {
+  for (let s = Math.floor(lp / span) - 1; s * span - lp < VW + span; s++) {
     const x0 = s * span - lp;
     ctx.beginPath();
     for (let i = 0; i <= 12; i++) { const u = i / 12; ctx.lineTo(x0 + u * span, 46 + Math.sin(u * Math.PI) * 14); }
@@ -815,7 +822,7 @@ function drawBackdrop(cx) {
   // crowd
   for (let row = 0; row < 3; row++) {
     const par = 0.5 + row * 0.08, y = 76 + row * 9, sp = 7.2, off = ((cx * par) % sp + sp) % sp, base = Math.floor(cx * par / sp);
-    for (let i = -1; i * sp - off < W + sp; i++) {
+    for (let i = -1; i * sp - off < VW + sp; i++) {
       const id = base + i + row * 1000, h = hash(id), x = i * sp - off + (h - 0.5) * 2.5;
       const bob = h > 0.55 ? Math.max(0, Math.sin(gt * 6 + id)) * 0.9 : 0, col = CROWD[row][Math.floor(h * 3)];
       ell(x, y + 7, 3.5, 4.2, 0, col); circle(x, y - bob, 2.6, col);
@@ -825,23 +832,23 @@ function drawBackdrop(cx) {
   }
   // ring barrier with entrance arches
   const ak = Math.floor((cx - 60) / 448);
-  for (let k = ak; k <= ak + 2; k++) { const sx = 150 + k * 448 - cx; if (sx > -30 && sx < W + 30) drawArch(sx); }
-  ctx.fillStyle = lin(0, 104, 0, 119, ['#e2305a', '#8f1238']); ctx.fillRect(0, 104, W, 15);
-  ctx.fillStyle = lin(0, 101, 0, 105, ['#ffe08a', '#e8911c']); ctx.fillRect(0, 101.5, W, 3);
-  for (let x = -((cx % 40) + 40) % 40; x < W + 20; x += 40) star(x + 20, 111.5, 2.6, 'rgba(255,200,74,0.9)');
-  for (let k = ak; k <= ak + 2; k++) { const sx = 150 + k * 448 - cx; if (sx > -30 && sx < W + 30) { ctx.fillStyle = '#0b0620'; ctx.fillRect(sx - 12, 101, 24, 18); } }
+  for (let k = ak; k <= ak + 2; k++) { const sx = 150 + k * 448 - cx; if (sx > -30 && sx < VW + 30) drawArch(sx); }
+  ctx.fillStyle = lin(0, 104, 0, 119, ['#e2305a', '#8f1238']); ctx.fillRect(0, 104, VW, 15);
+  ctx.fillStyle = lin(0, 101, 0, 105, ['#ffe08a', '#e8911c']); ctx.fillRect(0, 101.5, VW, 3);
+  for (let x = -((cx % 40) + 40) % 40; x < VW + 20; x += 40) star(x + 20, 111.5, 2.6, 'rgba(255,200,74,0.9)');
+  for (let k = ak; k <= ak + 2; k++) { const sx = 150 + k * 448 - cx; if (sx > -30 && sx < VW + 30) { ctx.fillStyle = '#0b0620'; ctx.fillRect(sx - 12, 101, 24, 18); } }
   // ring floor
-  ctx.fillStyle = lin(0, 118, 0, H, ['#a32a56', '#6a1640', '#330b26']); ctx.fillRect(0, 118, W, H - 118);
-  ctx.fillStyle = 'rgba(255,190,120,0.25)'; ctx.fillRect(0, 118.5, W, 0.8);
-  for (const [y, a] of [[132, 0.07], [156, 0.06], [190, 0.05], [228, 0.05]]) { ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(0, y, W, 0.6); }
+  ctx.fillStyle = lin(0, 118, 0, H, ['#a32a56', '#6a1640', '#330b26']); ctx.fillRect(0, 118, VW, H - 118);
+  ctx.fillStyle = 'rgba(255,190,120,0.25)'; ctx.fillRect(0, 118.5, VW, 0.8);
+  for (const [y, a] of [[132, 0.07], [156, 0.06], [190, 0.05], [228, 0.05]]) { ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(0, y, VW, 0.6); }
 }
 function drawMarkers() {
   for (let k = 1; ; k++) {
     const x = Lpx - k * 10 * MPX; if (x < -40) break;
-    const sx = x - camX; if (sx < -30 || sx > W + 30) continue;
-    seg(sx, 222, sx, 208, 0.6, 'rgba(255,255,255,.6)'); poly([sx, 208, sx + 6, 210, sx, 212], '#ffc84a');
-    rr(sx - 12, 222, 24, 9, 4.5, 'rgba(10,4,25,.5)');
-    text(k * 10 + ' m', sx, 226.8, { size: 6, w: 600, align: 'center', color: '#fff3dd' });
+    const sx = x - camX; if (sx < -30 || sx > VW + 30) continue;
+    seg(sx, 207, sx, 196, 0.6, 'rgba(255,255,255,.6)'); poly([sx, 196, sx + 6, 198, sx, 200], '#ffc84a');
+    rr(sx - 12, 207, 24, 9, 4.5, 'rgba(10,4,25,.5)');
+    text(k * 10 + ' m', sx, 211.8, { size: 6, w: 600, align: 'center', color: '#fff3dd' });
   }
 }
 
@@ -860,7 +867,7 @@ const FX = {
   sparkle(x, y, cols = ['#ffc84a', '#fff3c4', '#ff9ad0']) { emit(10, x, y, { speed: 70, life: 0.6, size: 1.4, cols, g: 120, type: 'spark' }); },
   burst(x, y) { emit(18, x, y, { speed: 120, life: 0.9, size: 2, cols: ['#ffc84a', '#ff4d6d', '#ffffff'], g: 220, type: 'star' }); },
   splash(x, y) { emit(14, x, y, { angle: -Math.PI / 2, arc: 1.6, speed: 110, life: 0.7, size: 1.4, cols: ['#bfe6ff', '#6cc4ff', '#ffffff'], g: 520 }); },
-  confetti() { const cx = P ? camFor(P.x) : camX; for (let i = 0; i < 90; i++) emit(1, cx + Math.random() * W, -10 - Math.random() * 40, { angle: Math.PI / 2, arc: 1, speed: 40, life: 3.2, size: 2.2, cols: ['#ff4d6d', '#ffc84a', '#25d0c0', '#6b7cff', '#ff5cb4'], g: 60, type: 'confetti', drag: 0.6 }); }
+  confetti() { const cx = P ? camFor(P.x) : camX; for (let i = 0; i < 90; i++) emit(1, cx + Math.random() * VW, camY - 10 - Math.random() * 40, { angle: Math.PI / 2, arc: 1, speed: 40, life: 3.2, size: 2.2, cols: ['#ff4d6d', '#ffc84a', '#25d0c0', '#6b7cff', '#ff5cb4'], g: 60, type: 'confetti', drag: 0.6 }); }
 };
 function updateParts(dt) {
   for (const p of parts) {
@@ -943,7 +950,7 @@ function updatePickups(dt) {
 function safe(x) { if (x - CP >= 10 * MPX) CP = x; }
 // Bonzo sits about a third of the way in, even at the start of a stage, so the
 // on-screen arrows in the bottom-left corner never cover him
-function camFor(x) { const lo = (LV ? LV.start : 0) - W * 0.34; return clamp(x - W * 0.34, lo, Math.max(lo, Lpx - W * 0.62)); }
+function camFor(x) { const lo = (LV ? LV.start : 0) - VW * 0.34; return clamp(x - VW * 0.34, lo, Math.max(lo, Lpx - VW * 0.62)); }
 
 function newGame(st, pool) {
   score = 0; lives = 3; nextLife = 20000; stageNum = st; forcePool = !!pool; runCoins = 0; bestCombo = 0;
@@ -969,7 +976,7 @@ function spawnAt(x0) {
   OBS = JSON.parse(BASE).filter(o => o.keep || o.x > x0 + 110);
   PICKS = JSON.parse(BASE_PICKS).filter(k => !taken.has(k.id));
   P = LV.newPlayer(x0); P.dead = false; P.dy = 0; P.dvy = 0; P.cheer = false; P.anim = P.anim || 0;
-  camX = camFor(P.x); floats = []; parts = []; callouts = [];
+  camX = camFor(P.x); camY = camYT = camTop(); floats = []; parts = []; callouts = [];
 }
 function die(fall) {
   if (state !== 'play') return;
@@ -1007,6 +1014,9 @@ function runnerPlayer(dt, spd, back) {
   if (p.g && p.vx) p.anim += dt * Math.abs(p.vx) / 10;
   if (p.g) safe(p.x);
 }
+// Rings, monkeys and balls start moving once they are this far ahead of Bonzo. It's a fixed distance (what a
+// wide phone used before zooming) so every screen size and zoom gets the same, tested obstacle timing.
+const WAKE = 390;
 function runnerPlayerNew(x) { return { x, y: GROUND, vx: 0, vy: 0, g: true, anim: 0 }; }
 
 // ---- pickup layouts (coins along jump arcs and lines, plus a couple of power-ups per stage)
@@ -1045,7 +1055,7 @@ const LION_LV = {
     const p = P, lion = [p.x - 12, p.y - 12, p.x + 12, p.y - 1], rider = [p.x - 8, p.y - 22, p.x, p.y - 9];
     for (const o of OBS) {
       if (o.t === 'ring') {
-        if (!o.act && o.x - camX < W + 44) o.act = true;
+        if (!o.act && o.x - P.x < WAKE) o.act = true;
         if (o.act) o.x -= o.sp * dt;
         const { ry, cy } = this.ringGeo(o);
         const top = [o.x - 3, cy - ry - 3, o.x + 3, cy - ry + 7], bot = [o.x - 3, GROUND - 20, o.x + 3, GROUND - 10];
@@ -1064,7 +1074,7 @@ const LION_LV = {
   },
   drawRing(o, front) {
     const { ry, rx, cy } = this.ringGeo(o), sx = o.x - camX;
-    if (sx < -30 || sx > W + 30) return;
+    if (sx < -30 || sx > VW + 30) return;
     if (!front) glow(sx, cy, ry * 1.1, ORANGE, 0.28, 1);
     ctx.beginPath(); ctx.ellipse(sx, cy, rx, ry, 0, front ? -Math.PI / 2 : Math.PI / 2, front ? Math.PI / 2 : Math.PI * 1.5);
     ctx.lineWidth = 1.3; ctx.strokeStyle = '#7a3a12'; ctx.stroke();
@@ -1087,7 +1097,7 @@ const LION_LV = {
     const p = P, sx = p.x - camX;
     drawPodium(Lpx);
     for (const o of OBS) {
-      if (o.t === 'pot' && Math.abs(o.x - camX - W / 2) < W / 2 + 30) { shadowAt(o.x - camX, 0, 7); drawBrazier(o.x - camX, GROUND); }
+      if (o.t === 'pot' && Math.abs(o.x - camX - VW / 2) < VW / 2 + 30) { shadowAt(o.x - camX, 0, 7); drawBrazier(o.x - camX, GROUND); }
       if (o.t === 'ring') this.drawRing(o, false);
     }
     shadowAt(sx + 1, GROUND - p.y, 14);
@@ -1130,7 +1140,7 @@ const WIRE_LV = {
     if (p.g) safe(p.x);
     const pb = [p.x - 4, p.y - 15, p.x + 4, p.y - 1];
     for (const m of OBS) {
-      if (!m.act && m.x - camX < W + 30) m.act = true;
+      if (!m.act && m.x - P.x < WAKE) m.act = true;
       if (!m.act) continue;
       m.x -= m.sp * dt; m.anim += dt * m.sp / 6;
       if (m.blue) {
@@ -1147,7 +1157,7 @@ const WIRE_LV = {
     const p = P, sx0 = 0 - camX, sx1 = Lpx - camX;
     // towers at each end
     for (const sx of [sx0 + 4, sx1 + 10]) {
-      if (sx < -30 || sx > W + 30) continue;
+      if (sx < -30 || sx > VW + 30) continue;
       shadowAt(sx, 0, 9);
       rr(sx - 1.8, ROPE, 3.6, GROUND - ROPE, 1.8, lin(sx - 2, 0, sx + 2, 0, ['#8d89b8', '#f4f2ff', '#8d89b8']));
       rr(sx - 13, ROPE - 0.5, 26, 4, 2, lin(0, ROPE, 0, ROPE + 4, ['#ff5d7a', '#c8174a']));
@@ -1157,11 +1167,11 @@ const WIRE_LV = {
       ell(sx, GROUND, 8, 1.8, 0, '#4a3660');
     }
     // the wire, with a soft sheen
-    const a = Math.max(0, sx0 + 4), b = Math.min(W, sx1 + 10);
+    const a = Math.max(0, sx0 + 4), b = Math.min(VW, sx1 + 10);
     if (b > a) {
       seg(a, ROPE + 0.4, b, ROPE + 0.4, 1.3, '#6b5a9a'); seg(a, ROPE, b, ROPE, 0.6, '#fff6e6');
     }
-    for (const m of OBS) if (m.x - camX > -20 && m.x - camX < W + 20) { shadowAt(m.x - camX, GROUND - m.y, 5); drawMonkey(m.x - camX, m.y, m.anim * 1.6, m.blue); }
+    for (const m of OBS) if (m.x - camX > -20 && m.x - camX < VW + 20) { shadowAt(m.x - camX, GROUND - m.y, 5); drawMonkey(m.x - camX, m.y, m.anim * 1.6, m.blue); }
     shadowAt(p.x - camX, GROUND - p.y, 6);
     drawBonzo(p.x - camX, p.y + p.dy, p.dead ? 'dead' : p.cheer ? 'cheer' : !p.g ? 'jump' : p.vx ? 'run' : 'balance', p.anim * 1.2);
   }
@@ -1258,18 +1268,18 @@ const TRAMP_LV = {
   },
   draw() {
     const p = P;
-    if (!POOL) { ctx.fillStyle = 'rgba(10,0,25,0.25)'; ctx.fillRect(0, GROUND + 4, W, 3); }
+    if (!POOL) { ctx.fillStyle = 'rgba(10,0,25,0.25)'; ctx.fillRect(0, GROUND + 4, VW, 3); }
     for (const o of OBS) {
       const sx = o.x - camX;
       if (o.t === 'plat') {
-        const a = Math.max(-5, o.x - camX), b = Math.min(W + 5, o.x1 - camX);
+        const a = Math.max(-5, o.x - camX), b = Math.min(VW + 5, o.x1 - camX);
         if (b > a) {
           rr(a, TTOP, b - a, GROUND + 16 - TTOP, 2, lin(0, TTOP, 0, GROUND + 16, ['#ff5d7a', '#9e1238']));
           rr(a, TTOP - 0.5, b - a, 2.2, 1, '#ffe08a');
           for (let x = Math.ceil((a + camX) / 20) * 20; x < b + camX; x += 20) star(x - camX, TTOP + 9, 2.2, 'rgba(255,224,138,.8)');
         }
         if (o.end) drawPodium(Lpx, TTOP);
-      } else if ((o.t === 'knifer' || o.t === 'breather') && sx > -30 && sx < W + 30) {
+      } else if ((o.t === 'knifer' || o.t === 'breather') && sx > -30 && sx < VW + 30) {
         const h = this.hz(o), set = o.t === 'knifer' ? OUTFIT.knifer : OUTFIT.breather;
         const acting = o.t === 'knifer' ? h.tau < 0.25 : h.h > 0;
         drawBonzo(sx, GROUND + 13, acting ? 'cheer' : 'stand', 0, set, BK, true);
@@ -1290,14 +1300,14 @@ const TRAMP_LV = {
         }
       }
     }
-    for (const o of OBS) if (o.t === 'tramp' && o.x - camX > -20 && o.x - camX < W + 20) { shadowAt(o.x - camX, 0, 13); this.drawTramp(o.x - camX, o.sq); }
+    for (const o of OBS) if (o.t === 'tramp' && o.x - camX > -20 && o.x - camX < VW + 20) { shadowAt(o.x - camX, 0, 13); this.drawTramp(o.x - camX, o.sq); }
     if (POOL) {
       const top = GROUND - 3;
       ctx.beginPath(); ctx.moveTo(0, H);
-      for (let x = 0; x <= W; x += 6) ctx.lineTo(x, top + Math.sin((x + camX) * 0.08 + gt * 3) * 0.9);
-      ctx.lineTo(W, H); ctx.closePath();
+      for (let x = 0; x <= VW; x += 6) ctx.lineTo(x, top + Math.sin((x + camX) * 0.08 + gt * 3) * 0.9);
+      ctx.lineTo(VW, H); ctx.closePath();
       ctx.fillStyle = lin(0, top, 0, H, ['rgba(70,170,255,.85)', 'rgba(20,80,190,.92)', 'rgba(10,30,100,.95)']); ctx.fill();
-      for (let i = 0; i < 14; i++) { const x = ((i * 37 - camX * 0.9 + gt * 9) % (W + 40) + W + 40) % (W + 40) - 20; seg(x, GROUND + 6 + (i % 4) * 7, x + 6, GROUND + 6 + (i % 4) * 7, 0.5, 'rgba(190,230,255,.35)'); }
+      for (let i = 0; i < 14; i++) { const x = ((i * 37 - camX * 0.9 + gt * 9) % (VW + 40) + VW + 40) % (VW + 40) - 20; seg(x, GROUND + 6 + (i % 4) * 7, x + 6, GROUND + 6 + (i % 4) * 7, 0.5, 'rgba(190,230,255,.35)'); }
       for (const o of OBS) if (o.t === 'piranha') {
         const h = this.hz(o);
         if (h.box && h.py < GROUND) {
@@ -1339,7 +1349,7 @@ const BALL_LV = {
   update(dt) {
     const p = P;
     for (const o of OBS) {
-      if (!o.act && o.x - camX < W + 34) o.act = true;
+      if (!o.act && o.x - P.x < WAKE) o.act = true;
       if (o === p.ball) {
         o.vx = toward(o.vx, R() ? 65 : L() ? -38 : 0, 150 * dt);
         const minX = Math.max(camX + 12, LV.start - 20);
@@ -1372,7 +1382,7 @@ const BALL_LV = {
   draw() {
     const p = P;
     drawPodium(Lpx);
-    for (const o of OBS) { const sx = o.x - camX; if (sx > -20 && sx < W + 20) { shadowAt(sx, 0, 9); drawBall(sx, GROUND, 8, o.rot); } }
+    for (const o of OBS) { const sx = o.x - camX; if (sx > -20 && sx < VW + 20) { shadowAt(sx, 0, 9); drawBall(sx, GROUND, 8, o.rot); } }
     shadowAt(p.x - camX, GROUND - p.y - 16, 5);
     drawBonzo(p.x - camX, p.y + p.dy, p.dead ? 'dead' : p.cheer ? 'cheer' : !p.ball ? 'jump' : 'balance');
   }
@@ -1420,7 +1430,7 @@ const HORSE_LV = {
     drawPodium(Lpx);
     for (const o of OBS) {
       const sx = o.x - camX;
-      if (sx < -20 || sx > W + 20) continue;
+      if (sx < -20 || sx > VW + 20) continue;
       if (o.t === 'wall') {
         shadowAt(sx, 0, 7);
         const top = GROUND - o.h;
@@ -1450,7 +1460,7 @@ const HORSE_LV = {
 // ---------- 6: FLYING TRAPEZE
 const AY = 40, LR = 88, AMP = 0.62, OM = Math.sqrt(GRAV / LR), PT = AY + LR + 12;
 const TRAP_LV = {
-  name: () => 'Flying Trapeze', meters: 50, start: 20,
+  name: () => 'Flying Trapeze', meters: 50, start: 20, viewBottom: 196,
   build() {
     const o = [{ t: 'tplat', x: -60, x1: 40, keep: 1 }], D = 116 + 6 * (loop - 1);
     let ax = 118, i = 0;
@@ -1515,13 +1525,13 @@ const TRAP_LV = {
   draw() {
     const p = P;
     // lighting truss
-    ctx.fillStyle = lin(0, AY - 6, 0, AY - 1, ['#5a5488', '#2a2550']); ctx.fillRect(0, AY - 6, W, 4);
-    ctx.beginPath(); for (let x = -((camX % 8) + 8) % 8; x < W + 8; x += 8) { ctx.moveTo(x, AY - 6); ctx.lineTo(x + 4, AY - 2); ctx.lineTo(x + 8, AY - 6); }
+    ctx.fillStyle = lin(0, AY - 6, 0, AY - 1, ['#5a5488', '#2a2550']); ctx.fillRect(0, AY - 6, VW, 4);
+    ctx.beginPath(); for (let x = -((camX % 8) + 8) % 8; x < VW + 8; x += 8) { ctx.moveTo(x, AY - 6); ctx.lineTo(x + 4, AY - 2); ctx.lineTo(x + 8, AY - 6); }
     ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(200,195,240,.5)'; ctx.stroke();
     for (const o of OBS) {
       if (o.t === 'tplat') {
         const px = (o.end ? o.x + 12 : o.x1 - 10) - camX, a = o.x - camX, b = o.x1 - camX;
-        if (b < -10 || a > W + 10) continue;
+        if (b < -10 || a > VW + 10) continue;
         shadowAt(px, 0, 9);
         rr(px - 1.8, PT, 3.6, GROUND - PT, 1.8, lin(px - 2, 0, px + 2, 0, ['#8d89b8', '#f4f2ff', '#8d89b8']));
         ell(px, GROUND, 8, 1.8, 0, '#4a3660');
@@ -1530,7 +1540,7 @@ const TRAP_LV = {
         if (o.end) drawPodium(Lpx, PT);
       } else if (o.t === 'trap') {
         const bb = this.bar(o), ax = o.ax - camX, bx = bb.x - camX;
-        if (ax < -100 || ax > W + 100) continue;
+        if (ax < -100 || ax > VW + 100) continue;
         ctx.beginPath(); ctx.moveTo(ax - 2.5, AY - 2); ctx.lineTo(bx - 7, bb.y); ctx.moveTo(ax + 2.5, AY - 2); ctx.lineTo(bx + 7, bb.y);
         ctx.lineWidth = 0.6; ctx.strokeStyle = 'rgba(255,246,230,.85)'; ctx.stroke();
         circle(ax, AY - 2, 1.6, '#c9c4ec');
@@ -1578,7 +1588,10 @@ function update(dt) {
       bonusT += dt; while (bonusT >= 0.2) { bonusT -= 0.2; bonus = Math.max(0, bonus - 10); }
       LV.update(gdt);
       if (state === 'play') updatePickups(gdt);
-      if (state === 'play' || state === 'clear') camX = camFor(P.x);
+      if (state === 'play' || state === 'clear') {
+        camX = camFor(P.x);
+        camYT = clamp(playerBox()[1] - (44 / ZOOM + 9), 10, camTop()); // keep his head clear of the score bar
+      }
       break;
     }
     case 'pause':
@@ -1610,6 +1623,7 @@ function update(dt) {
       break;
   }
   if (state !== 'pause') updateParts(dt);
+  camY += (camYT - camY) * Math.min(1, dt * (camYT < camY ? 10 : 4)); // rise quickly with a jump, settle back gently
   shake = Math.max(0, shake - dt * 14); flash = Math.max(0, flash - dt * 2.5);
   for (const f of floats) f.t += dt;
   floats = floats.filter(f => f.t < 1);
@@ -1645,7 +1659,7 @@ function powerIcon(kind, x, y, r) {
 function drawPickups() {
   for (const k of PICKS) {
     if (k.got) continue;
-    const sx = k.x - camX; if (sx < -12 || sx > W + 12) continue;
+    const sx = k.x - camX; if (sx < -12 || sx > VW + 12) continue;
     if (k.t === 'coin') coinIcon(sx, k.y + Math.sin(gt * 3 + k.id) * 0.8, 3.4, Math.cos(gt * 3.2 + k.id * 0.6));
     else {
       const y = k.y + Math.sin(gt * 2.4 + k.id) * 2;
@@ -1733,8 +1747,14 @@ function drawFloats() {
     ctx.globalAlpha = 1;
   }
 }
+// Draws the zoomed playfield, then leaves the canvas in HUD space (240 units tall) for whatever comes next.
 function drawScene() {
+  const sk = S * DPR, z = sk * ZOOM;
+  const ox = shake > 0 ? (Math.random() - 0.5) * shake * z : 0, oy = shake > 0 ? (Math.random() - 0.5) * shake * z : 0;
+  // the tent behind scrolls up and down at half speed, so its lights and crowd stay in view
+  ctx.setTransform(z, 0, 0, z, ox, oy - camY * 0.5 * z);
   drawBackdrop(camX);
+  ctx.setTransform(z, 0, 0, z, ox, oy - camY * z);
   if (P) glow(P.x - camX, GROUND - 2, 60, WARM, 0.12, 0.22);
   drawMarkers();
   LV.draw();
@@ -1742,6 +1762,8 @@ function drawScene() {
   drawPlayerFX();
   drawParts();
   drawFloats();
+  ctx.setTransform(sk, 0, 0, sk, 0, 0);
+  if (flash > 0) { ctx.fillStyle = `rgba(255,40,80,${flash * 0.25})`; ctx.fillRect(0, 0, W, H); }
   if (timeScale < 0.98) { // slow motion: cool tint at the edges
     const a = (1 - timeScale) / 0.45;
     ctx.fillStyle = radg(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.7, ['rgba(120,90,255,0)', `rgba(120,90,255,${0.22 * a})`]); ctx.fillRect(0, 0, W, H);
@@ -1766,6 +1788,10 @@ function drawLogo(cx, y, s = 1) {
   ctx.restore();
 }
 function drawTitle() {
+  const vw0 = VW; VW = W; // the title screen is drawn unzoomed
+  try { drawTitleScreen(); } finally { VW = vw0; }
+}
+function drawTitleScreen() {
   camX = 0;
   drawBackdrop(gt * 14);
   vignette(0.5);
@@ -1804,10 +1830,7 @@ function render() {
   ctx.imageSmoothingEnabled = true;
   if (state === 'title') return drawTitle();
   if (state === 'intro') return drawIntro();
-  if (shake > 0) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
   drawScene();
-  if (flash > 0) { ctx.fillStyle = `rgba(255,40,80,${flash * 0.25})`; ctx.fillRect(-10, -10, W + 20, H + 20); }
-  ctx.setTransform(S * DPR, 0, 0, S * DPR, 0, 0);
   drawHUD();
   drawCallouts();
   if (state === 'pause') {
