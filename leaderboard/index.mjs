@@ -55,8 +55,8 @@ export default {
         const name = String(body.name ?? '').normalize('NFKC').replace(/[^\p{L}\p{N} _.\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
         const score = Number(body.score), stage = Number(body.stage);
         if (!name) return json({ error: 'Enter a name using letters or numbers.' }, 400);
-        // a stage is worth well under 25,000 points, so anything above that is not a real score
-        if (!Number.isInteger(score) || !Number.isInteger(stage) || score < 1 || stage < 1 || stage > 500 || score > stage * 25000)
+        // even with a x5 combo a stage is worth well under 60,000 points, so anything above that is not a real score
+        if (!Number.isInteger(score) || !Number.isInteger(stage) || score < 1 || stage < 1 || stage > 500 || score > stage * 60000)
           return json({ error: 'That score could not be accepted.' }, 400);
         const [row] = await sql('INSERT INTO scores (name, score, stage) VALUES ($1, $2, $3) RETURNING id', [name, score, stage]);
         // ties go to whoever scored first, matching the order of the list

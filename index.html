@@ -56,16 +56,29 @@
   body.touch.st-title #stages{display:flex}
   body.st-title #dpad,body.st-title #jump,body.st-title #pauseBtn{display:none}
   /* leaderboard */
-  #boardBtn{position:fixed;left:calc(12px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));display:none;align-items:center;gap:8px;
+  #topLeft{position:fixed;left:calc(12px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));display:none;gap:8px}
+  #topLeft button{display:flex;align-items:center;gap:8px;
     height:44px;padding:0 18px 0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--glass);color:var(--ink);font:inherit;font-size:15px;font-weight:600;
     -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer}
-  #boardBtn svg{width:20px;height:20px;fill:var(--gold)}
-  body.st-title #boardBtn{display:flex}
-  body.board-open #boardBtn{display:none}
-  #board{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+  #topLeft svg{width:20px;height:20px;fill:var(--gold)}
+  #topLeft .coins{color:var(--gold);font-variant-numeric:tabular-nums}
+  body.st-title #topLeft{display:flex}
+  body.board-open #topLeft{display:none}
+  #board,#ward{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;box-sizing:border-box;
     padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));background:rgba(8,3,22,.62);
     -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);touch-action:auto;-webkit-user-select:text;user-select:text}
-  #board[hidden]{display:none}
+  #board[hidden],#ward[hidden]{display:none}
+  #wardGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:4px 0 6px}
+  .look{display:grid;justify-items:center;gap:4px;padding:10px 8px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.06);color:var(--ink);font:inherit;cursor:pointer;height:auto!important}
+  .look img{width:72px;height:96px;object-fit:contain}
+  .look .nm{font-size:15px;font-weight:600}
+  .look .st{font-size:13px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:4px}
+  .look .st i{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff1b8,#ffc84a 55%,#d1860e);display:inline-block}
+  .look.on{border-color:var(--gold);background:rgba(255,200,74,.16)}
+  .look.on .st{color:var(--gold)}
+  .look.locked img{filter:brightness(.55) saturate(.6)}
+  .look:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .panel{width:min(440px,100%);max-height:100%;overflow:auto;box-sizing:border-box;padding:20px 20px 16px;border-radius:22px;
     background:linear-gradient(180deg,#36196f,#190b3c);border:1px solid rgba(255,200,74,.42);box-shadow:0 18px 50px rgba(0,0,0,.5)}
   .panel h2{margin:0;font-size:26px;font-weight:700;text-align:center;color:var(--gold);text-wrap:balance}
@@ -103,7 +116,19 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<button id="boardBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/></svg>Leaderboard</button>
+<div id="topLeft">
+  <button id="boardBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/></svg>Leaderboard</button>
+  <button id="wardBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3h-2a1 1 0 1 0-1 1 1 1 0 0 1 1 1v.6l8.4 5.6A2 2 0 0 1 20.3 18H3.7a2 2 0 0 1-1.1-3.8L11 8.6V7a1 1 0 0 1 1-1zm0 7.4-7.8 5.2a.4.4 0 0 0 .2.4h15.2a.4.4 0 0 0 .2-.4z"/></svg>Wardrobe <span class="coins" id="wardBtnCoins"></span></button>
+</div>
+<div id="ward" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="wardTitle">
+    <h2 id="wardTitle">Wardrobe</h2>
+    <p class="sub" id="wardSub">Coins: 0</p>
+    <div id="wardGrid"></div>
+    <p id="wardMsg" class="msg" role="status"></p>
+    <div class="actions"><button type="button" id="wardClose" class="primary">Done</button></div>
+  </div>
+</div>
 <div id="board" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="boardTitle">
     <h2 id="boardTitle">Leaderboard</h2>
@@ -146,11 +171,12 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
-const APP_VERSION = '2.3'; // shown on the title screen; bump with VERSION in sw.js
+const APP_VERSION = '3.0'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
 let W = 384; // visible world width; follows the screen's shape (256 to 528)
 const FONT = '"Fredoka", "Baloo 2", "Nunito", system-ui, sans-serif';
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const cv = document.getElementById('c');
+let ctx = cv.getContext('2d'); // swapped briefly to paint wardrobe previews
 let S = 2, DPR = 1, PORTRAIT = false;
 let TOUCH = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
 function resize() {
@@ -184,7 +210,7 @@ addEventListener('load', resize);
 const keys = {}; let pressed = {};
 const touch = { left: false, right: false, jump: false, jumpP: false };
 addEventListener('keydown', e => {
-  if (BOARD.isOpen) { if (e.code === 'Escape') BOARD.close(); return; } // typing a name, not playing
+  if (BOARD.isOpen || WARD.isOpen) { if (e.code === 'Escape') { if (BOARD.isOpen) BOARD.close(); if (WARD.isOpen) WARD.close(); } return; } // menus open, not playing
   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
   if (!keys[e.code]) pressed[e.code] = true;
   keys[e.code] = true; AU.unlock();
@@ -231,7 +257,7 @@ document.querySelectorAll('#stages button').forEach(b => b.addEventListener('cli
   e.stopPropagation(); AU.unlock(); const s = +b.dataset.s;
   if (state === 'title') newGame(s === 7 ? 3 : s, s === 7);
 }));
-['contextmenu', 'gesturestart', 'dblclick'].forEach(t => addEventListener(t, e => { if (!BOARD.isOpen) e.preventDefault(); }));
+['contextmenu', 'gesturestart', 'dblclick'].forEach(t => addEventListener(t, e => { if (!BOARD.isOpen && !WARD.isOpen) e.preventDefault(); }));
 
 // ---------------------------------------------------------------- online leaderboard
 const LEADERBOARD_URL = 'https://br-raspy-surf-b3g6ixt6-scores.compute.c-4.ap-southeast-1.aws.neon.tech/scores';
@@ -306,6 +332,55 @@ const BOARD = {
     }
   }
 };
+// ---------------------------------------------------------------- wardrobe
+const previews = {};
+function previewOf(item) { // paint Bonzo in this outfit with the game's own drawing code
+  if (previews[item.id]) return previews[item.id];
+  const c = mkC(144, 192), old = ctx;
+  ctx = c.getContext('2d'); ctx.setTransform(7.2, 0, 0, 7.2, 0, 0); // fills the card: the 144x192 canvas is 20 x 26.7 world units
+  try { drawBonzo(10, 25.6, 'cheer', 0, item.of, BK); } finally { ctx = old; }
+  return (previews[item.id] = c.toDataURL());
+}
+const WARD = {
+  isOpen: false,
+  open() { this.isOpen = true; document.body.classList.add('board-open'); $('ward').hidden = false; $('wardMsg').textContent = ''; $('wardMsg').className = 'msg'; this.render(); },
+  close() { this.isOpen = false; document.body.classList.remove('board-open'); $('ward').hidden = true; refreshTitleUI(); },
+  render() {
+    $('wardSub').textContent = `Coins: ${fmt(WALLET)}`;
+    const grid = $('wardGrid'); grid.replaceChildren();
+    for (const it of WARDROBE) {
+      const owned = OWNED.includes(it.id), on = MY_OUTFIT === it.id;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'look' + (on ? ' on' : '') + (owned ? '' : ' locked');
+      const img = document.createElement('img'); img.alt = ''; img.src = previewOf(it);
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = it.name;
+      const st = document.createElement('span'); st.className = 'st';
+      if (owned) st.textContent = on ? 'Wearing' : 'Wear';
+      else { st.append(document.createElement('i'), document.createTextNode(fmt(it.cost))); }
+      b.setAttribute('aria-label', `${it.name}: ${owned ? (on ? 'wearing' : 'tap to wear') : fmt(it.cost) + ' coins'}`);
+      b.append(img, nm, st); b.addEventListener('click', () => this.choose(it)); grid.append(b);
+    }
+  },
+  choose(it) {
+    const msg = $('wardMsg');
+    if (OWNED.includes(it.id)) { MY_OUTFIT = it.id; msg.className = 'msg good'; msg.textContent = `Bonzo is wearing ${it.name}.`; }
+    else if (WALLET >= it.cost) {
+      WALLET -= it.cost; OWNED.push(it.id); MY_OUTFIT = it.id; SFX.power();
+      msg.className = 'msg good'; msg.textContent = `Unlocked ${it.name}!`;
+    } else { msg.className = 'msg err'; msg.textContent = `You need ${fmt(it.cost - WALLET)} more coins. Collect them on any stage.`; }
+    saveProgress(); this.render();
+  }
+};
+function refreshTitleUI() {
+  $('wardBtnCoins').textContent = fmt(WALLET);
+  document.querySelectorAll('#stages button').forEach(b => {
+    if (!b.dataset.label) b.dataset.label = b.textContent;
+    const n = BEST_STARS[b.dataset.s === '7' ? 'pool' : b.dataset.s] || 0;
+    b.textContent = b.dataset.label + (n ? ' ' + '★'.repeat(n) : '');
+  });
+}
+$('wardBtn').addEventListener('click', () => { AU.unlock(); WARD.open(); });
+$('wardClose').addEventListener('click', () => WARD.close());
+$('ward').addEventListener('pointerdown', e => { if (e.target === $('ward')) WARD.close(); });
 $('boardBtn').addEventListener('click', () => { AU.unlock(); BOARD.open('view'); });
 $('boardClose').addEventListener('click', () => BOARD.close());
 $('boardPlay').addEventListener('click', () => { BOARD.close(); newGame(1); });
@@ -352,7 +427,14 @@ const SFX = {
   die() { [660, 590, 520, 440, 330, 220].forEach((f, i) => AU.later(i * 0.11, f, 0.14, 'triangle', 0.14)); },
   clear() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => AU.later(i * 0.1, f, i === 5 ? 0.45 : 0.12, 'triangle', 0.14)); },
   oneup() { [784, 988, 1175, 1568].forEach((f, i) => AU.later(i * 0.07, f, 0.1, 'sine', 0.1)); },
-  start() { [392, 523, 659, 784].forEach((f, i) => AU.later(i * 0.12, f, 0.14, 'triangle', 0.12)); }
+  start() { [392, 523, 659, 784].forEach((f, i) => AU.later(i * 0.12, f, 0.14, 'triangle', 0.12)); },
+  coin() { // each coin in a quick run chimes a little higher
+    const now = AU.ctx ? AU.ctx.currentTime : 0; this.cs = now - (this.ct || 0) < 0.6 ? Math.min((this.cs || 0) + 1, 12) : 0; this.ct = now;
+    const f = 1047 * Math.pow(2, this.cs / 12); AU.tone(f, 0.06, 'sine', 0.07); AU.later(0.05, f * 1.5, 0.1, 'sine', 0.06);
+  },
+  power() { [523, 784, 1047, 1568].forEach((f, i) => AU.later(i * 0.05, f, 0.12, 'triangle', 0.1)); },
+  shieldPop() { AU.tone(900, 0.25, 'triangle', 0.18, 180); },
+  perfect() { [1319, 1760].forEach((f, i) => AU.later(i * 0.06, f, 0.14, 'sine', 0.09)); }
 };
 // Original oom-pah march (2/4), 8th-note steps
 const MEL = [72,0,76,79, 84,0,79,76, 77,0,74,77, 81,0,79,0, 76,0,72,76, 79,0,77,74, 72,74,76,77, 79,0,0,0,
@@ -452,6 +534,22 @@ const OUTFIT = {
   knifer:   { suit: '#8a6bff', suitDk: '#4e36c4', dot: '#ffffff', pants: '#2b2350', hat: '#2b2350', hat2: '#cfd2ff', hair: '#4a2c1a', hairDk: '#2b170c', shoe: '#1d1530' },
   breather: { suit: '#ff8a2a', suitDk: '#c4501a', dot: '#ffe066', pants: '#a8233a', hat: '#ff4d6d', hat2: '#ffd84a', hair: '#ffd84a', hairDk: '#e0a21a', shoe: '#a8233a' }
 };
+// Bonzo's wardrobe: bought with coins collected on the course
+const WARDROBE = [
+  { id: 'classic', name: 'Classic', cost: 0, of: OUTFIT.bonzo },
+  { id: 'ringmaster', name: 'Ringmaster', cost: 200, of: { suit: '#e8364f', suitDk: '#8f1030', dot: '#ffc84a', pants: '#231a3a', pantsDk: '#120c22', hat: '#1d1530', hat2: '#e8364f', hatStyle: 'top', hair: '#5a321a', hairDk: '#33190b', shoe: '#1d1530', shoeDk: '#0d0818' } },
+  { id: 'neon', name: 'Neon', cost: 400, of: { suit: '#19e6ff', suitDk: '#0a6a9a', dot: '#ff3df2', pants: '#3a1290', pantsDk: '#220870', hat: '#ff3df2', hat2: '#19e6ff', hair: '#ff3df2', hairDk: '#a810a0', shoe: '#19e6ff', shoeDk: '#0a8fb0', glow: [25, 230, 255] } },
+  { id: 'royal', name: 'Royal', cost: 700, of: { suit: '#7b3cff', suitDk: '#3e1a9a', dot: '#ffd34a', pants: '#2a1660', pantsDk: '#180a40', hat: '#ffc84a', hat2: '#ff4d6d', hatStyle: 'crown', hair: '#f4f0ff', hairDk: '#bdb6e0', shoe: '#ffc84a', shoeDk: '#c48a1c' } },
+  { id: 'golden', name: 'Golden Star', cost: 1200, of: { suit: '#ffd34a', suitDk: '#d1860e', dot: '#ffffff', pants: '#ff9f1c', pantsDk: '#c46a08', hat: '#fff3c4', hat2: '#ffb02e', hair: '#fff3c4', hairDk: '#e8c06a', shoe: '#ffffff', shoeDk: '#d9d4f0', sparkle: true } }
+];
+let MY_OUTFIT = 'classic', OWNED = ['classic'], WALLET = 0;
+try {
+  const w = JSON.parse(localStorage.getItem('bigtopbonzo_wardrobe') || 'null');
+  if (w) { MY_OUTFIT = w.on || 'classic'; OWNED = w.owned || ['classic']; }
+  WALLET = +localStorage.getItem('bigtopbonzo_coins') || 0;
+} catch (e) {}
+function saveProgress() { try { localStorage.setItem('bigtopbonzo_coins', WALLET); localStorage.setItem('bigtopbonzo_wardrobe', JSON.stringify({ on: MY_OUTFIT, owned: OWNED })); } catch (e) {} }
+const myOutfit = () => (WARDROBE.find(w => w.id === MY_OUTFIT) || WARDROBE[0]).of;
 const BK = 0.62; // Bonzo's art is drawn ~31 units tall and scaled to fit the game's hitboxes
 function limb(x, y, a1, l1, a2, l2, w, col) {
   const kx = x + Math.sin(a1) * l1, ky = y + Math.cos(a1) * l1, fx = kx + Math.sin(a2) * l2, fy = ky + Math.cos(a2) * l2;
@@ -480,10 +578,20 @@ function drawHead(hx, hy, of, face) {
   // face
   circle(hx, hy, 4.4, radg(hx - 1.4, hy - 1.6, 0.4, hx, hy, 4.6, ['#ffeedd', '#ffd6b6', '#f4b48e']));
   // hat
-  poly([hx - 3.5, hy - 3.1, hx + 3.1, hy - 3.6, hx + 1.2, hy - 10.6], lin(hx - 3, hy - 10, hx + 3, hy - 3, [of.hat, of.hat]));
-  poly([hx - 1.9, hy - 5.9, hx + 2.3, hy - 6.2, hx + 1.6, hy - 8.0, hx - 0.8, hy - 7.8], of.hat2);
-  ell(hx - 0.2, hy - 3.3, 3.6, 0.9, -0.08, of.hat2);
-  circle(hx + 1.2, hy - 10.8, 1.35, of.hat2); circle(hx + 0.8, hy - 11.2, 0.5, 'rgba(255,255,255,.7)');
+  if (of.hatStyle === 'top') {
+    ell(hx - 0.2, hy - 3.4, 5, 1.1, -0.08, of.hat);
+    rr(hx - 3, hy - 10.4, 5.8, 7, 1, lin(hx - 3, 0, hx + 3, 0, ['#3a2e5c', of.hat]));
+    rr(hx - 3, hy - 5.4, 5.8, 1.4, 0.4, of.hat2);
+  } else if (of.hatStyle === 'crown') {
+    poly([hx - 3.4, hy - 3.2, hx + 3.2, hy - 3.6, hx + 3.4, hy - 8.4, hx + 1.8, hy - 6, hx + 0.1, hy - 9.4, hx - 1.6, hy - 6, hx - 3.2, hy - 8.2], lin(0, hy - 9, 0, hy - 3, ['#fff1b8', of.hat, '#d1860e']));
+    circle(hx + 0.1, hy - 4.6, 0.8, of.hat2); circle(hx - 2.2, hy - 4.4, 0.55, '#25d0c0'); circle(hx + 2.3, hy - 4.6, 0.55, '#25d0c0');
+    for (const [px, py] of [[-3.2, -8.2], [0.1, -9.4], [3.4, -8.4]]) circle(hx + px, hy + py, 0.6, '#fff3c4');
+  } else {
+    poly([hx - 3.5, hy - 3.1, hx + 3.1, hy - 3.6, hx + 1.2, hy - 10.6], lin(hx - 3, hy - 10, hx + 3, hy - 3, [of.hat, of.hat]));
+    poly([hx - 1.9, hy - 5.9, hx + 2.3, hy - 6.2, hx + 1.6, hy - 8.0, hx - 0.8, hy - 7.8], of.hat2);
+    ell(hx - 0.2, hy - 3.3, 3.6, 0.9, -0.08, of.hat2);
+    circle(hx + 1.2, hy - 10.8, 1.35, of.hat2); circle(hx + 0.8, hy - 11.2, 0.5, 'rgba(255,255,255,.7)');
+  }
   // cheeks
   circle(hx - 0.4, hy + 1.3, 0.95, 'rgba(255,90,120,.35)'); circle(hx + 3.7, hy + 1.1, 0.8, 'rgba(255,90,120,.35)');
   // eyes
@@ -500,13 +608,15 @@ function drawHead(hx, hy, of, face) {
   circle(hx + 3.7, hy + 0.5, 1.3, radg(hx + 3.3, hy + 0.1, 0.1, hx + 3.7, hy + 0.5, 1.4, ['#ff8a9a', '#ff2a4a', '#c4002a']));
   circle(hx + 3.35, hy + 0.05, 0.35, 'rgba(255,255,255,.85)');
 }
-function drawBonzo(sx, sy, pose, ph = 0, of = OUTFIT.bonzo, scale = BK, flip = false) {
+function drawBonzo(sx, sy, pose, ph = 0, of = myOutfit(), scale = BK, flip = false) {
   const P_ = bonzoPose(pose, ph, gt), face = pose === 'dead' ? 'dead' : 'happy';
   ctx.save(); ctx.translate(sx, sy); ctx.scale(flip ? -scale : scale, scale);
   const hip = -8.8 - P_.bob, sh = hip - 6.6;
-  const shoe = (f, back) => { ell(f[0] + 1.3, f[1] - 0.4, 2.5, 1.3, 0, back ? '#c42445' : of.shoe); if (!back) ell(f[0] + 1.8, f[1] - 0.9, 0.9, 0.35, 0, 'rgba(255,255,255,.55)'); };
+  if (of.glow) glow(0, hip - 6, 16, of.glow, 0.35 + 0.1 * Math.sin(gt * 5));
+  if (of.sparkle) for (let i = 0; i < 4; i++) { const a = gt * 2.2 + i * 1.57; star(Math.cos(a) * 8, hip - 7 + Math.sin(a * 1.3) * 9, 0.9 + 0.5 * Math.sin(gt * 7 + i), '#fff3c4', a); }
+  const shoe = (f, back) => { ell(f[0] + 1.3, f[1] - 0.4, 2.5, 1.3, 0, back ? (of.shoeDk || '#c42445') : of.shoe); if (!back) ell(f[0] + 1.8, f[1] - 0.9, 0.9, 0.35, 0, 'rgba(255,255,255,.55)'); };
   // far limbs
-  shoe(limb(-1, hip, P_.legs[0][0], 4.4, P_.legs[0][1], 4.4, 2.7, '#3438b8'), true);
+  shoe(limb(-1, hip, P_.legs[0][0], 4.4, P_.legs[0][1], 4.4, 2.7, of.pantsDk || '#3438b8'), true);
   let hand = limb(-2.8, sh, P_.arms[0][0], 3.1, P_.arms[0][1], 3.1, 1.9, of.suitDk);
   circle(hand[0], hand[1], 1.3, '#e6e2f5');
   // torso
@@ -780,13 +890,55 @@ function saveHi() { if (score > hi) hi = score; try { localStorage.setItem('bigt
 function setState(s) {
   state = s; stateT = 0;
   document.body.className = document.body.className.replace(/\bst-\S+/g, '').trim() + ' st-' + s;
+  if (s === 'title' && typeof refreshTitleUI === 'function') refreshTitleUI(); // coin count and stage stars
 }
 
-function addScore(n, x, y) {
+// ---- combos, coins, power-ups, stars
+let combo = 0, comboT = 0, bestCombo = 0;         // clean stunts in a row; the timer resets with each one
+let shieldOn = false, inv = 0, magnetT = 0, slowT = 0, timeScale = 1;
+let PICKS = [], BASE_PICKS = '[]', taken = new Set(), stageCoins = 0, coinsTotal = 0, runCoins = 0, livesAtStart = 3, lastStars = 0;
+let callouts = [];
+const mult = () => Math.min(5, 1 + Math.floor(combo / 4));
+let BEST_STARS = {};
+try { BEST_STARS = JSON.parse(localStorage.getItem('bigtopbonzo_stars') || '{}') || {}; } catch (e) {}
+const stageKey = () => POOL ? 'pool' : String(level);
+function callout(s, col = '#ffe08a', size = 15) { callouts.push({ s, col, size, t: 0 }); }
+
+function addScore(n, x, y, stunt = true) {
+  if (inv > 0 && stunt) return;            // no credit for obstacles the shield let you pass through
+  const m = mult(); n *= m;
   score += n; if (score > hi) hi = score;
-  if (x !== undefined) { floats.push({ x, y, s: '+' + n, t: 0 }); FX.sparkle(x, y); }
+  if (x !== undefined) { floats.push({ x, y, s: '+' + fmt(n), t: 0 }); FX.sparkle(x, y); }
   SFX.score();
+  if (stunt) {
+    combo++; comboT = 6; bestCombo = Math.max(bestCombo, combo);
+    if (mult() > m) { callout(`×${mult()} combo!`, '#ffc84a', 17); SFX.oneup(); }
+  }
   if (score >= nextLife) { lives++; nextLife += 30000; SFX.oneup(); floats.push({ x: P.x, y: P.y - 40, s: '+1 life', t: 0 }); }
+}
+function playerBox() { return LV.box ? LV.box(P) : [P.x - 6, P.y - 18, P.x + 6, P.y]; }
+function updatePickups(dt) {
+  const b = playerBox(), cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+  for (const k of PICKS) {
+    if (k.got) continue;
+    if (k.t === 'coin' && magnetT > 0) {
+      const dx = cx - k.x, dy = cy - k.y, d = Math.hypot(dx, dy);
+      if (d < 90) { const sp = Math.min(d, 240 * dt); k.x += dx / d * sp; k.y += dy / d * sp; }
+    }
+    const r = k.t === 'coin' ? 4 : 6;
+    if (k.x + r < b[0] || k.x - r > b[2] || k.y + r < b[1] || k.y - r > b[3]) continue;
+    k.got = true; taken.add(k.id);
+    if (k.t === 'coin') {
+      stageCoins++; runCoins++; WALLET++;
+      addScore(10, undefined, undefined, false);
+      SFX.coin(); emit(5, k.x, k.y, { speed: 50, life: 0.4, size: 1.1, cols: ['#ffe08a', '#fff3c4'], g: 0, type: 'spark' });
+    } else {
+      SFX.power(); FX.sparkle(k.x, k.y, ['#9ad8ff', '#ffffff', '#ffc84a']);
+      if (k.kind === 'shield') { shieldOn = true; callout('Shield!', '#9ad8ff'); }
+      if (k.kind === 'magnet') { magnetT = 9; callout('Coin magnet!', '#ff8aa0'); }
+      if (k.kind === 'slow') { slowT = 6; callout('Slow motion!', '#c9a8ff'); }
+    }
+  }
 }
 function safe(x) { if (x - CP >= 10 * MPX) CP = x; }
 // Bonzo sits about a third of the way in, even at the start of a stage, so the
@@ -794,31 +946,50 @@ function safe(x) { if (x - CP >= 10 * MPX) CP = x; }
 function camFor(x) { const lo = (LV ? LV.start : 0) - W * 0.34; return clamp(x - W * 0.34, lo, Math.max(lo, Lpx - W * 0.62)); }
 
 function newGame(st, pool) {
-  score = 0; lives = 3; nextLife = 20000; stageNum = st; forcePool = !!pool; SFX.start(); startStage();
+  score = 0; lives = 3; nextLife = 20000; stageNum = st; forcePool = !!pool; runCoins = 0; bestCombo = 0;
+  combo = 0; shieldOn = false; magnetT = slowT = inv = 0;
+  SFX.start(); startStage();
 }
 function startStage() {
   level = ((stageNum - 1) % 6) + 1; loop = Math.floor((stageNum - 1) / 6) + 1;
   SM = 1 + 0.15 * (loop - 1);
   POOL = level === 3 && (loop % 3 === 0 || forcePool);
   LV = LEVELS[level]; Lpx = LV.meters * MPX;
-  BASE = JSON.stringify(LV.build(RNG(stageNum * 977 + 13), 1 + 0.12 * (loop - 1)));
+  const obs = LV.build(RNG(stageNum * 977 + 13), 1 + 0.12 * (loop - 1));
+  BASE = JSON.stringify(obs);
+  const picks = LV.pickups ? LV.pickups(obs, RNG(stageNum * 131 + 7)) : [];
+  picks.forEach((k, i) => { k.id = i; });
+  BASE_PICKS = JSON.stringify(picks); taken = new Set();
+  coinsTotal = picks.filter(k => k.t === 'coin').length; stageCoins = 0; livesAtStart = lives;
   CP = LV.start; bonus = 5000; bonusT = 0; lt = 0;
   MUS.tempo = Math.max(0.1, 0.15 - 0.01 * (loop - 1));
   spawnAt(CP); setState('intro');
 }
 function spawnAt(x0) {
   OBS = JSON.parse(BASE).filter(o => o.keep || o.x > x0 + 110);
+  PICKS = JSON.parse(BASE_PICKS).filter(k => !taken.has(k.id));
   P = LV.newPlayer(x0); P.dead = false; P.dy = 0; P.dvy = 0; P.cheer = false; P.anim = P.anim || 0;
-  camX = camFor(P.x); floats = []; parts = [];
+  camX = camFor(P.x); floats = []; parts = []; callouts = [];
 }
 function die(fall) {
   if (state !== 'play') return;
+  if (!fall && inv > 0) return;                       // just after the shield popped
+  if (!fall && shieldOn) {                            // the shield takes the hit instead
+    shieldOn = false; inv = 1.5; shake = 3; SFX.shieldPop();
+    const b = playerBox(); FX.sparkle((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, ['#9ad8ff', '#ffffff', '#c9e9ff']);
+    callout('Shield saved you!', '#9ad8ff', 13); return;
+  }
   setState('dying'); P.dead = true; P.dvy = fall ? 0 : -170; MUS.stop(); SFX.die();
   shake = 5; flash = 1; FX.burst(P.x, P.y - 14);
+  combo = 0; comboT = 0; shieldOn = false; magnetT = slowT = 0; saveProgress();
 }
 function doClear() {
   if (state !== 'play') return;
   setState('clear'); P.cheer = true; MUS.stop(); SFX.clear(); tallyAcc = 0; tallyDone = -1; FX.confetti();
+  // stars: 1 for finishing, 2 for no lives lost on this stage, 3 for that plus 60% of the coins
+  lastStars = 1 + (lives >= livesAtStart ? 1 : 0) + (lives >= livesAtStart && stageCoins >= coinsTotal * 0.6 ? 1 : 0);
+  const k = stageKey(); if ((BEST_STARS[k] || 0) < lastStars) { BEST_STARS[k] = lastStars; try { localStorage.setItem('bigtopbonzo_stars', JSON.stringify(BEST_STARS)); } catch (e) {} }
+  magnetT = slowT = 0; saveProgress();
 }
 
 // =====================================================================
@@ -838,6 +1009,24 @@ function runnerPlayer(dt, spd, back) {
 }
 function runnerPlayerNew(x) { return { x, y: GROUND, vx: 0, vy: 0, g: true, anim: 0 }; }
 
+// ---- pickup layouts (coins along jump arcs and lines, plus a couple of power-ups per stage)
+const coinArc = (list, cx, baseY, n, gap, h) => { for (let i = 0; i < n; i++) { const u = n > 1 ? i / (n - 1) * 2 - 1 : 0; list.push({ t: 'coin', x: cx + u * gap * (n - 1) / 2, y: baseY - h * (1 - u * u) }); } };
+const coinLine = (list, x0, n, gap, y) => { for (let i = 0; i < n; i++) list.push({ t: 'coin', x: x0 + i * gap, y }); };
+const POWERS = ['shield', 'magnet', 'slow'];
+function addPowers(list, r, spots) { const first = Math.floor(r() * 3); spots.forEach(([x, y], i) => list.push({ t: 'pow', kind: POWERS[(first + i) % 3], x, y })); } // never the same one twice in a stage
+const clearOf = (obs, x, d) => !obs.some(o => o.t !== 'ring' && Math.abs(o.x - x) < d);
+function runnerPickups(obs, r, arcH) {
+  const k = [];
+  for (const o of obs) {
+    if (o.t === 'pot' || o.t === 'wall') coinArc(k, o.x, GROUND - 14, 5, 13, arcH + (o.h || 0) * 0.4);
+    if (o.t === 'spring') coinArc(k, o.x + 46, GROUND - 14, 5, 15, 88); // reward for bouncing off the springboard
+  }
+  for (let x = 120; x < Lpx - 120; x += 260 + r() * 140) if (clearOf(obs, x + 24, 60)) coinLine(k, x, 5, 12, GROUND - 14);
+  const spots = [Lpx * 0.3, Lpx * 0.66].map(x => { while (!clearOf(obs, x, 50)) x += 20; return [x, GROUND - 42]; });
+  addPowers(k, r, spots);
+  return k;
+}
+
 // ---------- 1: LION & FLAMING RINGS
 const LION_LV = {
   name: () => "Lion's Leap", meters: 100, start: 30,
@@ -848,6 +1037,8 @@ const LION_LV = {
     return o;
   },
   newPlayer: runnerPlayerNew,
+  box: p => [p.x - 12, p.y - 26, p.x + 12, p.y],
+  pickups: (obs, r) => runnerPickups(obs, r, 44),
   ringGeo(o) { const ry = o.small ? 37 : 46; return { ry, rx: o.small ? 6 : 8, cy: GROUND - 12 - ry }; },
   update(dt) {
     runnerPlayer(dt, 92, 45);
@@ -859,7 +1050,10 @@ const LION_LV = {
         const { ry, cy } = this.ringGeo(o);
         const top = [o.x - 3, cy - ry - 3, o.x + 3, cy - ry + 7], bot = [o.x - 3, GROUND - 20, o.x + 3, GROUND - 10];
         if (hit(lion, top) || hit(rider, top) || hit(lion, bot) || hit(rider, bot)) return die();
-        if (!o.sc && p.x > o.x + 4) { o.sc = 1; addScore(o.small ? 500 : 100, o.x, cy); }
+        if (!o.sc && p.x > o.x + 4) {
+          o.sc = 1; addScore(o.small ? 500 : 100, o.x, cy);
+          if (inv <= 0 && Math.abs(p.y - 15 - cy) < ry * 0.35) { addScore(150, o.x, cy - 14, false); callout('Perfect!', '#7cf5e8'); SFX.perfect(); } // threaded the middle
+        }
       } else if (o.t === 'pot') {
         if (hit(lion, [o.x - 5, GROUND - 13, o.x + 5, GROUND])) return die();
         if (!o.sc && p.x > o.x + 14) { o.sc = 1; addScore(200, o.x, GROUND - 34); }
@@ -916,6 +1110,15 @@ const WIRE_LV = {
     return o;
   },
   newPlayer(x) { return { x, y: ROPE, vx: 0, vy: 0, g: true, anim: 0 }; },
+  box: p => [p.x - 5, p.y - 18, p.x + 5, p.y],
+  pickups(obs, r) { // monkeys move, so coins sit at fixed spots: runs along the wire and arcs to jump for
+    const k = []; let i = 0;
+    for (let x = 140; x < Lpx - 120; x += 150 + r() * 60, i++) {
+      if (i % 2) coinArc(k, x, ROPE - 8, 5, 12, 32); else coinLine(k, x - 24, 4, 12, ROPE - 8);
+    }
+    addPowers(k, r, [[Lpx * 0.32, ROPE - 36], [Lpx * 0.68, ROPE - 36]]);
+    return k;
+  },
   update(dt) {
     const p = P;
     if (p.g) { p.vx = R() ? 70 : L() ? -40 : 0; if (JP()) { p.vy = -238; p.g = false; SFX.jump(); } }
@@ -983,6 +1186,18 @@ const TRAMP_LV = {
     return o;
   },
   newPlayer(x) { return { x, y: TTOP - 40, vx: 0, vy: 0, g: false, anim: 0 }; },
+  box: p => [p.x - 5, p.y - 18, p.x + 5, p.y],
+  pickups(obs, r) { // coins over the gaps: low ones for normal bounces, high ones for big bounces
+    const k = [], tr = obs.filter(o => o.t === 'tramp');
+    tr.forEach((o, i) => {
+      const next = tr[i + 1]; if (!next) return;
+      const gx = (o.x + next.x) / 2, high = r() < 0.35;
+      coinArc(k, gx, TTOP - (high ? 72 : 46), 3, 10, high ? 22 : 14);
+    });
+    const pick = f => { const o = tr[Math.floor(tr.length * f)]; return o ? [o.x, TTOP - 40] : [Lpx * f, TTOP - 40]; };
+    addPowers(k, r, [pick(0.3), pick(0.66)]);
+    return k;
+  },
   hz(o) { // stateless hazard position from level time
     const tau = (lt * SM + o.ph) % HPER;
     if (o.t === 'breather') {
@@ -1112,6 +1327,15 @@ const BALL_LV = {
     return o;
   },
   newPlayer(x) { const b = { t: 'ball', x, vx: 0, rot: 0, act: 1 }; OBS.push(b); return { x, y: BTOP, vx: 0, vy: 0, ball: b, last: b, anim: 0 }; },
+  box: p => [p.x - 5, p.y - 18, p.x + 5, p.y],
+  pickups(obs, r) { // balls roll, so coins hang at fixed spots: some at riding height, some to jump for
+    const k = []; let i = 0;
+    for (let x = 150; x < Lpx - 120; x += 120 + r() * 70, i++) {
+      if (i % 3 === 2) coinLine(k, x - 18, 4, 12, BTOP - 9); else coinArc(k, x, BTOP - 12, 3, 12, 22);
+    }
+    addPowers(k, r, [[Lpx * 0.3, BTOP - 30], [Lpx * 0.66, BTOP - 30]]);
+    return k;
+  },
   update(dt) {
     const p = P;
     for (const o of OBS) {
@@ -1166,6 +1390,8 @@ const HORSE_LV = {
     return o;
   },
   newPlayer: runnerPlayerNew,
+  box: p => [p.x - 13, p.y - 30, p.x + 13, p.y],
+  pickups: (obs, r) => runnerPickups(obs, r, 48),
   update(dt) {
     runnerPlayer(dt, 118, 50);
     const p = P, horse = [p.x - 13, p.y - 13, p.x + 13, p.y - 1], rider = [p.x - 8, p.y - 25, p.x + 2, p.y - 12];
@@ -1237,6 +1463,17 @@ const TRAP_LV = {
   bar(o) {
     const w = OM * (1 + 0.06 * (loop - 1)), a = w * lt + o.ph, th = AMP * Math.sin(a), dth = AMP * w * Math.cos(a);
     return { x: o.ax + LR * Math.sin(th), y: AY + LR * Math.cos(th), vx: LR * Math.cos(th) * dth, vy: -LR * Math.sin(th) * dth };
+  },
+  box: p => p.st === 'hang' ? [p.x - 5, p.y - 2, p.x + 5, p.y + 13] : [p.x - 5, p.y - 4, p.x + 5, p.y + 10],
+  pickups(obs, r) { // coins in the gap between bars, where Bonzo flies
+    const k = [], tr = obs.filter(o => o.t === 'trap');
+    tr.forEach((o, i) => {
+      const nx = tr[i + 1] ? tr[i + 1].ax : obs.find(q => q.end).x + 10;
+      coinArc(k, (o.ax + nx) / 2, AY + LR + 6, 3, 9, 10);
+    });
+    const mid = tr[Math.floor(tr.length / 2)];
+    addPowers(k, r, [[mid ? mid.ax + 58 : Lpx / 2, AY + LR - 8]]);
+    return k;
   },
   newPlayer(x) {
     const tr = OBS.find(o => o.t === 'trap' && o.ax === x);
@@ -1320,8 +1557,9 @@ function update(dt) {
   if (pressed.KeyM) { AU.on = !AU.on; $('soundBtn').classList.toggle('off', !AU.on); if (!AU.on) MUS.stop(); else if (state === 'play') MUS.start(); }
   switch (state) {
     case 'title': {
-      if (BOARD.isOpen) break;
+      if (BOARD.isOpen || WARD.isOpen) break;
       if (pressed.KeyL) { BOARD.open('view'); break; }
+      if (pressed.KeyW) { WARD.open(); break; }
       for (let i = 1; i <= 7; i++) if (pressed['Digit' + i] || pressed['Numpad' + i]) { newGame(i === 7 ? 3 : i, i === 7); return; }
       if (pressed.Enter || pressed.Space || touch.jumpP) newGame(1);
       break;
@@ -1331,9 +1569,15 @@ function update(dt) {
       break;
     case 'play': {
       if (pressed.KeyP || pressed.Escape) { setState('pause'); MUS.stop(); break; }
-      lt += dt;
+      // power-up and combo timers run in real time; the world runs slower during slow motion
+      slowT = Math.max(0, slowT - dt); magnetT = Math.max(0, magnetT - dt); inv = Math.max(0, inv - dt);
+      if (comboT > 0 && (comboT -= dt) <= 0) combo = 0;
+      timeScale = toward(timeScale, slowT > 0 ? 0.55 : 1, dt * 3);
+      const gdt = dt * timeScale;
+      lt += gdt;
       bonusT += dt; while (bonusT >= 0.2) { bonusT -= 0.2; bonus = Math.max(0, bonus - 10); }
-      LV.update(dt);
+      LV.update(gdt);
+      if (state === 'play') updatePickups(gdt);
       if (state === 'play' || state === 'clear') camX = camFor(P.x);
       break;
     }
@@ -1369,11 +1613,75 @@ function update(dt) {
   shake = Math.max(0, shake - dt * 14); flash = Math.max(0, flash - dt * 2.5);
   for (const f of floats) f.t += dt;
   floats = floats.filter(f => f.t < 1);
+  for (const c of callouts) c.t += dt;
+  callouts = callouts.filter(c => c.t < 1.3);
+  if (state !== 'play') timeScale = toward(timeScale, 1, dt * 3);
 }
 
 // =====================================================================
 //  RENDER
 // =====================================================================
+function coinIcon(x, y, r, spin = 1) {
+  const w = Math.max(0.15, Math.abs(spin));
+  glow(x, y, r * 2.6, GOLD, 0.35);
+  ell(x, y, r * w, r, 0, lin(x, y - r, x, y + r, ['#fff1b8', '#ffc84a', '#d1860e']));
+  ell(x, y, r * 0.66 * w, r * 0.66, 0, '#ffd75e');
+  if (w > 0.45) star(x, y, r * 0.42, '#fff3c4');
+}
+function powerIcon(kind, x, y, r) {
+  if (kind === 'shield') {
+    ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.85, y - r * 0.55); ctx.quadraticCurveTo(x + r * 0.8, y + r * 0.6, x, y + r);
+    ctx.quadraticCurveTo(x - r * 0.8, y + r * 0.6, x - r * 0.85, y - r * 0.55); ctx.closePath(); ctx.fillStyle = lin(0, y - r, 0, y + r, ['#c9ecff', '#4aa8ff']); ctx.fill();
+    star(x, y, r * 0.38, '#ffffff');
+  } else if (kind === 'magnet') {
+    ctx.beginPath(); ctx.arc(x, y - r * 0.1, r * 0.62, Math.PI, 0); ctx.lineWidth = r * 0.5; ctx.strokeStyle = '#ff4d6d'; ctx.lineCap = 'butt'; ctx.stroke();
+    rr(x - r * 0.87, y - r * 0.12, r * 0.5, r * 0.75, r * 0.1, '#ff4d6d'); rr(x + r * 0.37, y - r * 0.12, r * 0.5, r * 0.75, r * 0.1, '#ff4d6d');
+    rr(x - r * 0.87, y + r * 0.42, r * 0.5, r * 0.3, r * 0.1, '#e8e6f5'); rr(x + r * 0.37, y + r * 0.42, r * 0.5, r * 0.3, r * 0.1, '#e8e6f5');
+  } else {
+    circle(x, y, r * 0.9, lin(0, y - r, 0, y + r, ['#e6d4ff', '#9a6bff']));
+    seg(x, y, x, y - r * 0.55, r * 0.16, '#2a1660'); seg(x, y, x + r * 0.42, y + r * 0.2, r * 0.16, '#2a1660');
+  }
+}
+function drawPickups() {
+  for (const k of PICKS) {
+    if (k.got) continue;
+    const sx = k.x - camX; if (sx < -12 || sx > W + 12) continue;
+    if (k.t === 'coin') coinIcon(sx, k.y + Math.sin(gt * 3 + k.id) * 0.8, 3.4, Math.cos(gt * 3.2 + k.id * 0.6));
+    else {
+      const y = k.y + Math.sin(gt * 2.4 + k.id) * 2;
+      glow(sx, y, 16, k.kind === 'shield' ? BLUE : k.kind === 'magnet' ? RED : [180, 140, 255], 0.5);
+      circle(sx, y, 6.6, 'rgba(255,255,255,.16)'); ctx.lineWidth = 0.6; ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.stroke();
+      powerIcon(k.kind, sx, y, 4.2);
+      ell(sx - 2.4, y - 3.2, 1.6, 0.8, -0.6, 'rgba(255,255,255,.7)');
+    }
+  }
+}
+function drawPlayerFX() {
+  if (!P || P.dead) return;
+  const b = playerBox(), cx = (b[0] + b[2]) / 2 - camX, cy = (b[1] + b[3]) / 2, r = Math.max(b[2] - b[0], b[3] - b[1]) * 0.62;
+  if (shieldOn) {
+    glow(cx, cy, r * 1.5, BLUE, 0.35);
+    circle(cx, cy, r, 'rgba(150,210,255,.12)'); ctx.lineWidth = 0.8; ctx.strokeStyle = `rgba(190,230,255,${0.6 + 0.3 * Math.sin(gt * 6)})`; ctx.stroke();
+    ell(cx - r * 0.4, cy - r * 0.5, r * 0.3, r * 0.14, -0.6, 'rgba(255,255,255,.5)');
+  }
+  if (inv > 0) { ctx.beginPath(); ctx.arc(cx, cy, r * (1 + (1.5 - inv) * 0.8), 0, 7); ctx.lineWidth = 0.6; ctx.strokeStyle = `rgba(190,230,255,${inv / 1.5})`; ctx.stroke(); }
+  if (magnetT > 0) { ctx.beginPath(); ctx.arc(cx, cy, 90 * ((gt * 0.8) % 1), 0, 7); ctx.lineWidth = 0.5; ctx.strokeStyle = `rgba(255,140,170,${0.3 * (1 - (gt * 0.8) % 1)})`; ctx.stroke(); }
+}
+function drawCallouts() {
+  for (const c of callouts) {
+    const k = Math.min(1, c.t / 0.18), pop = 0.6 + 0.4 * (1 - Math.pow(1 - k, 3)) + 0.12 * Math.max(0, 1 - c.t * 5), a = 1 - Math.max(0, (c.t - 0.9) / 0.4);
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(W / 2, 74 - c.t * 8); ctx.scale(pop, pop);
+    text(c.s, 0, 0, { size: c.size, w: 700, align: 'center', color: c.col, stroke: '#2a0f4a', sw: 3.5, shadow: 'rgba(0,0,0,.35)', sd: 1.5 });
+    ctx.restore();
+  }
+}
+function starsRow(cx, y, n, size, animT = 9) {
+  for (let i = 0; i < 3; i++) {
+    const x = cx + (i - 1) * size * 2.6, on = i < n, k = clamp((animT - i * 0.25) / 0.25, 0, 1), s = on ? 0.6 + 0.4 * k + 0.25 * Math.sin(Math.PI * k) : 1;
+    star(x, y + (i === 1 ? -size * 0.3 : 0), size * s, on && k > 0 ? '#ffc84a' : 'rgba(255,255,255,.18)');
+    if (on && k > 0) glow(x, y, size * 2.2, GOLD, 0.3 * k);
+  }
+}
 const glass = (x, y, w, h, r = h / 2) => { rr(x, y, w, h, r, 'rgba(14,6,36,.55)'); ctx.lineWidth = 0.5; ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.stroke(); };
 function drawHUD() {
   const reserve = TOUCH && !PORTRAIT ? 170 / S : 0; // keep clear of the pause / sound buttons
@@ -1396,6 +1704,26 @@ function drawHUD() {
   // lives
   glass(right - livesW, 5, livesW, 22, 8);
   for (let i = 0; i < Math.min(lives, 5); i++) heart(right - livesW + 8.5 + i * 9, 16.2, 1, i === lives - 1 && state === 'dying' ? 'rgba(255,77,109,.35)' : '#ff4d6d');
+  // second row: coins, combo, active power-ups
+  let x = 6;
+  glass(x, 30, 46, 14, 7); coinIcon(x + 8, 37, 3.2, 1);
+  text(`${stageCoins}/${coinsTotal}`, x + 14, 37.4, { size: 6, w: 700, color: '#ffe08a' }); x += 50;
+  if (combo > 0) {
+    const m = mult(), w = 54;
+    glass(x, 30, w, 14, 7);
+    text(`×${m}`, x + 6, 37.4, { size: 7.5, w: 700, color: m >= 3 ? '#ff8aa0' : '#ffc84a' });
+    text(`combo ${combo}`, x + 20, 37.4, { size: 5, w: 600, color: '#fff3dd' });
+    rr(x + 5, 41, (w - 10) * clamp(comboT / 6, 0, 1), 1.2, 0.6, m >= 3 ? '#ff8aa0' : '#ffc84a');
+    x += w + 4;
+  }
+  const pw2 = (kind, frac) => {
+    glass(x, 30, 14, 14, 7); powerIcon(kind, x + 7, 37, 3.6);
+    if (frac !== null) { ctx.beginPath(); ctx.arc(x + 7, 37, 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); ctx.lineWidth = 0.9; ctx.strokeStyle = '#fff3dd'; ctx.stroke(); }
+    x += 18;
+  };
+  if (shieldOn) pw2('shield', null);
+  if (magnetT > 0) pw2('magnet', magnetT / 9);
+  if (slowT > 0) pw2('slow', slowT / 6);
 }
 function drawFloats() {
   for (const f of floats) {
@@ -1410,8 +1738,14 @@ function drawScene() {
   if (P) glow(P.x - camX, GROUND - 2, 60, WARM, 0.12, 0.22);
   drawMarkers();
   LV.draw();
+  drawPickups();
+  drawPlayerFX();
   drawParts();
   drawFloats();
+  if (timeScale < 0.98) { // slow motion: cool tint at the edges
+    const a = (1 - timeScale) / 0.45;
+    ctx.fillStyle = radg(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.7, ['rgba(120,90,255,0)', `rgba(120,90,255,${0.22 * a})`]); ctx.fillRect(0, 0, W, H);
+  }
 }
 function vignette(a = 0.55) {
   ctx.fillStyle = radg(W / 2, H / 2, H * 0.3, W / 2, H / 2, W * 0.75, ['rgba(5,2,15,0)', `rgba(5,2,15,${a})`]);
@@ -1442,7 +1776,7 @@ function drawTitle() {
   text(TOUCH ? 'Tap to play' : 'Press Enter', 0, 0.5, { size: 9, w: 700, align: 'center', color: '#fff8ee' });
   ctx.restore();
   text('BEST  ' + fmt(hi), W / 2, 122, { size: 6, w: 600, align: 'center', color: '#ffe08a', ls: 1 });
-  if (!TOUCH) text('1–6 pick a stage  ·  7 piranha pool  ·  L leaderboard  ·  arrows + space to play', W / 2, 133, { size: 5.2, w: 500, align: 'center', color: '#c9bfe8' });
+  if (!TOUCH) text('1–6 pick a stage  ·  7 piranha pool  ·  L leaderboard  ·  W wardrobe  ·  arrows + space to play', W / 2, 133, { size: 5.2, w: 500, align: 'center', color: '#c9bfe8' });
   // the troupe takes a bow
   const bx = W * 0.2, lx = W * 0.8;
   ctx.save(); ctx.translate(bx, GROUND); ctx.scale(1.35, 1.35);
@@ -1461,6 +1795,7 @@ function drawIntro() {
   text(`STAGE ${stageNum}`, W / 2, y - 22, { size: 6, w: 600, align: 'center', color: '#ffc84a', ls: 2 });
   text(LV.name(), W / 2, y - 6, { size: 17, w: 700, align: 'center', color: '#fff8ee' });
   if (loop > 1) text(`Round ${loop}  ·  everything's faster`, W / 2, y + 10, { size: 5.6, w: 600, align: 'center', color: '#ff9ab5' });
+  else { const b = BEST_STARS[stageKey()] || 0; text(b ? 'Your best' : 'Collect coins, chain combos, earn 3 stars', W / 2 - (b ? 14 : 0), y + 10, { size: 5.4, w: 600, align: 'center', color: '#c9bfe8' }); if (b) starsRow(W / 2 + 14, y + 10, b, 3); }
   for (let i = 0; i < Math.min(lives, 5); i++) heart(W / 2 - (Math.min(lives, 5) - 1) * 5 + i * 10, y + 23, 1.1, '#ff4d6d');
   ctx.globalAlpha = 1;
 }
@@ -1474,6 +1809,7 @@ function render() {
   if (flash > 0) { ctx.fillStyle = `rgba(255,40,80,${flash * 0.25})`; ctx.fillRect(-10, -10, W + 20, H + 20); }
   ctx.setTransform(S * DPR, 0, 0, S * DPR, 0, 0);
   drawHUD();
+  drawCallouts();
   if (state === 'pause') {
     dim(0.55);
     text('Paused', W / 2, 110, { size: 20, w: 700, align: 'center', color: '#fff8ee' });
@@ -1482,10 +1818,12 @@ function render() {
   if (state === 'clear') {
     const k = Math.min(1, stateT / 0.4), s = 0.8 + 0.2 * (1 - Math.pow(1 - k, 3));
     ctx.save(); ctx.translate(W / 2, 108); ctx.scale(s, s); ctx.globalAlpha = k;
-    card(0, 0, 160, 58);
-    text('Stage clear!', 0, -11, { size: 16, w: 700, align: 'center', color: lin(0, -20, 0, 0, ['#fff3c4', '#ffc84a']) });
-    text(`Time bonus  ${fmt(bonus)}`, 0, 8, { size: 7, w: 600, align: 'center', color: '#fff8ee' });
-    text(`Score  ${fmt(score)}`, 0, 19, { size: 5.6, w: 500, align: 'center', color: '#c9bfe8' });
+    card(0, 4, 176, 84);
+    text('Stage clear!', 0, -24, { size: 16, w: 700, align: 'center', color: lin(0, -32, 0, -14, ['#fff3c4', '#ffc84a']) });
+    starsRow(0, -4, lastStars, 6, stateT - 0.3);
+    text(`Coins  ${stageCoins}/${coinsTotal}    Best combo  ${bestCombo}`, 0, 15, { size: 5.6, w: 600, align: 'center', color: '#fff3dd' });
+    text(`Time bonus  ${fmt(bonus)}`, 0, 27, { size: 7, w: 600, align: 'center', color: '#fff8ee' });
+    text(`Score  ${fmt(score)}`, 0, 38, { size: 5.6, w: 500, align: 'center', color: '#c9bfe8' });
     ctx.restore(); ctx.globalAlpha = 1;
   }
   if (state === 'gameover') {
