@@ -171,12 +171,15 @@
 // =====================================================================
 //  BIG TOP BONZO
 // =====================================================================
-const APP_VERSION = '3.1'; // shown on the title screen; bump with VERSION in sw.js
+const APP_VERSION = '3.2'; // shown on the title screen; bump with VERSION in sw.js
 const H = 240, GROUND = 200, MPX = 32, GRAV = 600;
 let W = 384; // screen width in HUD units (the screen is always 240 HUD units tall); follows the screen's shape (256 to 528)
 // The playfield is drawn zoomed in so everything looks bigger: 1.5x on wide screens, 1.3x on narrow ones,
 // where a stronger zoom would leave too little warning of what's ahead.
 let ZOOM = 1.5, VH = H / ZOOM, VW = W / ZOOM; // zoom, and the visible world height and width
+// a stage can zoom in further (zoomMul), e.g. the high wire, where Bonzo is on foot and the action is a thin band
+let ZOOM_MUL = 1; // set per stage; the page resizes before any stage exists
+function applyZoom() { ZOOM = (W >= 400 ? 1.5 : 1.3) * ZOOM_MUL; VH = H / ZOOM; VW = W / ZOOM; }
 // world y at the bottom of the view: just below the ground, or higher on the trapeze where the action is up in the air
 const camTop = () => ((LV && LV.viewBottom) || 220) - VH;
 let camY = 60, camYT = 60;                     // world y at the top of the view, and where it is heading
@@ -196,7 +199,7 @@ function resize() {
   if (!(vw > 0 && availH > 0)) return; // the window can briefly report 0x0 while the page loads
   W = Math.round(clamp(H * vw / availH, 256, 528)); // up to ~20:9 so tall phones fill the screen
   S = Math.min(vw / W, availH / H);
-  ZOOM = W >= 400 ? 1.5 : 1.3; VH = H / ZOOM; VW = W / ZOOM;
+  applyZoom();
   cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px';
   cv.style.marginTop = TOUCH && PORTRAIT ? Math.max(0, (vh - 240 - H * S) / 2) + 'px' : '0';
   cv.width = Math.round(W * S * DPR); cv.height = Math.round(H * S * DPR);
@@ -843,12 +846,13 @@ function drawBackdrop(cx) {
   for (const [y, a] of [[132, 0.07], [156, 0.06], [190, 0.05], [228, 0.05]]) { ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(0, y, VW, 0.6); }
 }
 function drawMarkers() {
+  const my = ((LV && LV.viewBottom) || 220) - 13;
   for (let k = 1; ; k++) {
     const x = Lpx - k * 10 * MPX; if (x < -40) break;
     const sx = x - camX; if (sx < -30 || sx > VW + 30) continue;
-    seg(sx, 207, sx, 196, 0.6, 'rgba(255,255,255,.6)'); poly([sx, 196, sx + 6, 198, sx, 200], '#ffc84a');
-    rr(sx - 12, 207, 24, 9, 4.5, 'rgba(10,4,25,.5)');
-    text(k * 10 + ' m', sx, 211.8, { size: 6, w: 600, align: 'center', color: '#fff3dd' });
+    seg(sx, my, sx, my - 11, 0.6, 'rgba(255,255,255,.6)'); poly([sx, my - 11, sx + 6, my - 9, sx, my - 7], '#ffc84a');
+    rr(sx - 12, my, 24, 9, 4.5, 'rgba(10,4,25,.5)');
+    text(k * 10 + ' m', sx, my + 4.8, { size: 6, w: 600, align: 'center', color: '#fff3dd' });
   }
 }
 
@@ -968,6 +972,7 @@ function startStage() {
   picks.forEach((k, i) => { k.id = i; });
   BASE_PICKS = JSON.stringify(picks); taken = new Set();
   coinsTotal = picks.filter(k => k.t === 'coin').length; stageCoins = 0; livesAtStart = lives;
+  ZOOM_MUL = LV.zoomMul || 1; applyZoom();
   CP = LV.start; bonus = 5000; bonusT = 0; lt = 0;
   MUS.tempo = Math.max(0.1, 0.15 - 0.01 * (loop - 1));
   spawnAt(CP); setState('intro');
@@ -1110,7 +1115,7 @@ const LION_LV = {
 // ---------- 2: TIGHTROPE & MONKEYS
 const ROPE = 150;
 const WIRE_LV = {
-  name: () => 'High Wire', meters: 100, start: 30,
+  name: () => 'High Wire', meters: 100, start: 30, zoomMul: 1.3, viewBottom: 186,
   build(r, dens) {
     const o = [];
     for (let x = 240; x < Lpx - 80; x += (120 + r() * 130) / dens) {

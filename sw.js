@@ -1,6 +1,6 @@
 // Service worker: lets Big Top Bonzo install as an app and play offline.
 // Bump VERSION (and APP_VERSION in index.html) whenever you publish changes.
-const VERSION = 'bonzo-v7';
+const VERSION = 'bonzo-v8';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'
